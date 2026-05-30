@@ -415,23 +415,50 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-top: none;
-    padding: 14px 18px;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
   }
   .stretch-exercise:last-of-type { border-radius: 0 0 var(--radius) var(--radius); }
-  .stretch-ex-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 10px; }
-  .stretch-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .stretch-ex-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: #374151;
+    background: #E5E7EB;
+    border: 1.5px solid #9CA3AF;
+    border-radius: 20px;
+    padding: 7px 14px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .stretch-tabs-scroll {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+    flex: 1;
+  }
+  .stretch-tabs-scroll::-webkit-scrollbar { display: none; }
+
   .stretch-tab {
     font-family: 'DM Mono', monospace;
     font-size: 11px;
     font-weight: 500;
     padding: 6px 14px;
     border-radius: 20px;
-    border: 1.5px solid var(--border);
-    background: #F1F0ED;
-    color: var(--muted);
+    border: 1.5px solid #9CA3AF;
+    background: #E5E7EB;
+    color: #374151;
     cursor: pointer;
     transition: all 0.15s;
     user-select: none;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   .stretch-tab.done {
     background: #D1FAE5;
@@ -994,12 +1021,14 @@ async function loadStretch() {
       const row = data[r];
       const exName = String(row[0] || "").trim();
       if (!exName) continue;
-      const tabs = row.slice(1, 1 + sessionLabels.length);
-      const tabsHtml = tabs.map((val, i) => {
-        const label = val || sessionLabels[i] || `Set ${i+1}`;
-        return `<button class="stretch-tab" onclick="toggleStretchTab(this)">${label}</button>`;
-      }).join("");
-      html += `<div class="stretch-exercise"><div class="stretch-ex-name">${exName}</div><div class="stretch-tabs">${tabsHtml}</div></div>`;
+      const tabs = row.slice(1).filter(v => v !== "" && v !== undefined && v !== null);
+      const tabsHtml = tabs.map(val =>
+        `<button class="stretch-tab" onclick="toggleStretchTab(this)">${val}</button>`
+      ).join("");
+      html += `<div class="stretch-exercise">
+        <div class="stretch-ex-name">${exName}</div>
+        <div class="stretch-tabs-scroll">${tabsHtml}</div>
+      </div>`;
     }
 
     body.innerHTML = html || '<div class="stretch-loading">No exercises found.</div>';
