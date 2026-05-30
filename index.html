@@ -433,6 +433,7 @@
     padding: 7px 14px;
     white-space: nowrap;
     flex-shrink: 0;
+    cursor: default;
   }
 
   .stretch-tabs-scroll {
@@ -1021,12 +1022,17 @@ async function loadStretch() {
       const row = data[r];
       const exName = String(row[0] || "").trim();
       if (!exName) continue;
-      const tabs = row.slice(1).filter(v => v !== "" && v !== undefined && v !== null);
+      // Only include cells that have actual content (not empty, not just a number from header)
+      const tabs = row.slice(1).filter(v => {
+        const s = String(v).trim();
+        return s !== "" && s !== "0" && isNaN(s);
+      });
+      if (!tabs.length) continue;
       const tabsHtml = tabs.map(val =>
         `<button class="stretch-tab" onclick="toggleStretchTab(this)">${val}</button>`
       ).join("");
       html += `<div class="stretch-exercise">
-        <div class="stretch-ex-name">${exName}</div>
+        <button class="stretch-ex-name">${exName}</button>
         <div class="stretch-tabs-scroll">${tabsHtml}</div>
       </div>`;
     }
