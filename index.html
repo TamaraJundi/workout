@@ -405,9 +405,28 @@
     border: 1px solid var(--border);
     border-radius: var(--radius) var(--radius) 0 0;
     padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
   .stretch-header h2 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 18px; color: #27272A; }
   .stretch-header p { font-size: 10px; color: var(--muted); margin-top: 3px; letter-spacing: 0.04em; }
+  .stretch-reset-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    border: 1.5px solid #9CA3AF;
+    border-radius: 20px;
+    background: transparent;
+    color: #6B6860;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .stretch-reset-btn:hover { border-color: #9F1239; color: #9F1239; }
 
   .stretch-loading { font-size: 12px; color: var(--muted); font-style: italic; padding: 20px 18px; background: var(--surface); border: 1px solid var(--border); border-top: none; }
 
@@ -778,8 +797,11 @@
   <!-- STRETCH -->
   <div class="session-panel" id="panel-Stretch">
     <div class="stretch-header">
-      <h2>Stretch &amp; Mobility</h2>
-      <p>RELOAD PAGE TO SYNC WITH SHEET · TAP BOXES TO MARK COMPLETE</p>
+      <div>
+        <h2>Stretch &amp; Mobility</h2>
+        <p>RELOADS FROM SHEET ON PAGE LOAD · TAP TO MARK COMPLETE</p>
+      </div>
+      <button class="stretch-reset-btn" onclick="resetStretch()">Reset</button>
     </div>
     <div id="stretch-body">
       <div class="stretch-loading">Loading exercises...</div>
@@ -1033,6 +1055,7 @@ async function loadStretch() {
     }
 
     body.innerHTML = html || '<div class="stretch-loading">No exercises found.</div>';
+    loadStretchState();
   } catch(e) {
     body.innerHTML = '<div class="stretch-loading">Could not load exercises.</div>';
   }
@@ -1040,6 +1063,28 @@ async function loadStretch() {
 
 function toggleStretchTab(el) {
   el.classList.toggle("done");
+  saveStretchState();
+}
+
+function saveStretchState() {
+  const done = [];
+  document.querySelectorAll(".stretch-tab.done").forEach(el => {
+    done.push(el.textContent + "|" + el.closest(".stretch-exercise").querySelector(".stretch-ex-name").textContent);
+  });
+  localStorage.setItem("stretchDone", JSON.stringify(done));
+}
+
+function loadStretchState() {
+  const done = JSON.parse(localStorage.getItem("stretchDone") || "[]");
+  document.querySelectorAll(".stretch-tab").forEach(el => {
+    const key = el.textContent + "|" + el.closest(".stretch-exercise").querySelector(".stretch-ex-name").textContent;
+    if (done.includes(key)) el.classList.add("done");
+  });
+}
+
+function resetStretch() {
+  localStorage.removeItem("stretchDone");
+  document.querySelectorAll(".stretch-tab").forEach(el => el.classList.remove("done"));
 }
 
 // Load stretch when tab is first opened
