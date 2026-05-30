@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workout Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,300;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --glute-a:   #5B21B6;
+    --glute-a-bg:#EDE9FE;
+    --glute-a-hdr:#DDD6FE;
+    --glute-b:   #9D174D;
+    --glute-b-bg:#FCE7F3;
+    --glute-b-hdr:#FBCFE8;
+    --leg-c:     #065F46;
+    --leg-c-bg:  #D1FAE5;
+    --leg-c-hdr: #A7F3D0;
+    --upper:     #92400E;
+    --upper-bg:  #FEF3C7;
+    --upper-hdr: #FDE68A;
+    --bg:        #FAFAF8;
+    --surface:   #FFFFFF;
+    --border:    #E5E3DC;
+    --text:      #1A1A18;
+    --muted:     #6B6860;
+    --radius:    10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0 0 60px;
+  }
+
+  /* HEADER */
+  .header {
+    padding: 32px 24px 0;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .header h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 32px;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+  }
+  .header p {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+    letter-spacing: 0.04em;
+  }
+
+  /* TABS */
+  .tabs {
+    max-width: 800px;
+    margin: 24px auto 0;
+    padding: 0 24px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .tab {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.18s ease;
+    letter-spacing: 0.04em;
+  }
+  .tab:hover { border-color: var(--active-color); color: var(--active-color); }
+  .tab.active {
+    background: var(--active-color);
+    border-color: var(--active-color);
+    color: white;
+  }
+  .tab[data-session="Glute A"]  { --active-color: var(--glute-a); }
+  .tab[data-session="Glute B"]  { --active-color: var(--glute-b); }
+  .tab[data-session="Leg C"]    { --active-color: var(--leg-c); }
+  .tab[data-session="Upper"]    { --active-color: var(--upper); }
+
+  /* MAIN CONTENT */
+  .content {
+    max-width: 800px;
+    margin: 20px auto 0;
+    padding: 0 24px;
+  }
+
+  .session-panel { display: none; }
+  .session-panel.active { display: block; }
+
+  /* SESSION HEADER */
+  .session-header {
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .session-header h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 18px;
+  }
+  .session-header p { font-size: 11px; opacity: 0.7; margin-top: 2px; letter-spacing: 0.03em; }
+
+  /* PAST SESSIONS */
+  .past-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: none;
+    padding: 16px 18px;
+  }
+  .past-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .past-sessions-scroll {
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .past-table {
+    border-collapse: collapse;
+    min-width: 100%;
+    font-size: 11px;
+  }
+  .past-table th {
+    text-align: left;
+    padding: 5px 10px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .past-table td {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .past-table tr:nth-child(even) td { background: var(--bg); }
+  .ex-row-label {
+    font-weight: 500;
+    font-size: 11px;
+    color: var(--text);
+  }
+  .set-label { color: var(--muted); font-size: 10px; }
+  .loading-msg {
+    font-size: 12px;
+    color: var(--muted);
+    padding: 12px 0;
+    font-style: italic;
+  }
+  .no-data-msg {
+    font-size: 12px;
+    color: var(--muted);
+    padding: 8px 0;
+    font-style: italic;
+  }
+
+  /* LOG NEW SESSION */
+  .log-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+    padding: 16px 18px 20px;
+  }
+  .log-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .log-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .session-num-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .session-num-wrap label {
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .session-num-input {
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    font-weight: 500;
+    width: 52px;
+    padding: 5px 8px;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text);
+    text-align: center;
+  }
+  .session-num-input:focus { outline: none; border-color: var(--acc); }
+
+  /* DATE INPUT */
+  .date-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .date-row label { font-size: 11px; color: var(--muted); }
+  .date-input {
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    padding: 6px 10px;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .date-input:focus { outline: none; border-color: var(--acc); }
+
+  /* EXERCISE LOG */
+  .exercise-block { margin-bottom: 16px; }
+  .exercise-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 8px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    display: inline-block;
+  }
+  .sets-grid {
+    display: grid;
+    gap: 6px;
+  }
+  .set-row {
+    display: grid;
+    grid-template-columns: 44px 1fr 1fr;
+    gap: 8px;
+    align-items: center;
+  }
+  .set-tag {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+  .set-input-wrap { display: flex; flex-direction: column; gap: 2px; }
+  .set-input-wrap span {
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .set-input {
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    font-weight: 500;
+    padding: 8px 10px;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text);
+    width: 100%;
+    text-align: center;
+    transition: border-color 0.15s;
+  }
+  .set-input:focus { outline: none; border-color: var(--acc); }
+  .set-input::placeholder { color: var(--border); }
+
+  /* SAVE BUTTON */
+  .save-btn {
+    width: 100%;
+    margin-top: 18px;
+    padding: 13px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: none;
+    border-radius: 8px;
+    background: var(--acc);
+    color: white;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .save-btn:hover { opacity: 0.88; }
+  .save-btn:active { transform: scale(0.98); }
+  .save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* STATUS */
+  .status-msg {
+    margin-top: 10px;
+    font-size: 11px;
+    text-align: center;
+    min-height: 16px;
+    letter-spacing: 0.03em;
+  }
+  .status-msg.success { color: #065F46; }
+  .status-msg.error   { color: #9D174D; }
+
+  /* DIVIDER between past and log */
+  .section-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 0;
+  }
+
+  /* OVERVIEW */
+  .overview-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+  .ov-header {
+    background: var(--ov-hdr);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ov-header h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ov-acc);
+    margin: 0;
+  }
+  .ov-header span {
+    font-size: 10px;
+    color: var(--ov-acc);
+    opacity: 0.7;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .ov-exercises { padding: 0; }
+  .ov-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 2fr;
+    gap: 8px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+  }
+  .ov-row.alt { background: var(--bg); }
+  .ov-row:last-child { border-bottom: none; }
+  .ov-name { font-size: 12px; font-weight: 500; color: var(--text); }
+  .ov-scheme { font-size: 11px; color: var(--ov-acc); font-weight: 500; }
+  .ov-note { font-size: 11px; color: var(--muted); font-style: italic; }
+  .ov-tip {
+    background: var(--ov-bg);
+    padding: 8px 16px;
+    font-size: 11px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+  }
+  .rules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 8px;
+  }
+  .rule-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+  }
+  .rule-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .rule-body {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* STRETCH PAGE */
+  .stretch-header {
+    background: #F1F0ED;
+    border: 1px solid var(--border);
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding: 14px 18px;
+  }
+  .stretch-header h2 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 18px; color: #27272A; }
+  .stretch-header p { font-size: 10px; color: var(--muted); margin-top: 3px; letter-spacing: 0.04em; }
+
+  .stretch-loading { font-size: 12px; color: var(--muted); font-style: italic; padding: 20px 18px; background: var(--surface); border: 1px solid var(--border); border-top: none; }
+
+  .stretch-exercise {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: none;
+    padding: 14px 18px;
+  }
+  .stretch-exercise:last-of-type { border-radius: 0 0 var(--radius) var(--radius); }
+  .stretch-ex-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 10px; }
+  .stretch-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .stretch-tab {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: #F1F0ED;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .stretch-tab.done {
+    background: #D1FAE5;
+    border-color: #065F46;
+    color: #065F46;
+  }
+
+  /* TIMER */
+  .timer-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 18px 24px;
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .timer-label { font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .timer-ring-wrap { position: relative; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; }
+  .timer-ring { position: absolute; top: 0; left: 0; width: 140px; height: 140px; transform: rotate(-90deg); }
+  .timer-ring-bg { fill: none; stroke: #F1F0ED; stroke-width: 8; }
+  .timer-ring-fill { fill: none; stroke: #065F46; stroke-width: 8; stroke-linecap: round; stroke-dasharray: 314; stroke-dashoffset: 0; transition: stroke-dashoffset 1s linear, stroke 0.3s; }
+  .timer-display {
+    position: relative;
+    z-index: 1;
+    font-family: 'Fraunces', serif;
+    font-size: 36px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -1px;
+  }
+  .timer-controls { display: flex; gap: 10px; }
+  .timer-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 9px 22px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .timer-btn.start { background: #065F46; border-color: #065F46; color: white; }
+  .timer-btn.start:hover { opacity: 0.85; }
+  .timer-btn.reset { background: transparent; color: var(--muted); }
+  .timer-btn.reset:hover { border-color: var(--muted); color: var(--text); }
+
+  @media (max-width: 500px) {
+    .ov-row { grid-template-columns: 1fr 1fr; }
+    .ov-note { display: none; }
+    .header { padding: 24px 16px 0; }
+    .tabs   { padding: 0 16px; }
+    .content { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Workout Tracker</h1>
+  <p>LOG YOUR SESSIONS · TRACK YOUR PROGRESS</p>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-session="Glute A" onclick="switchTab('Glute A')">Glute A</button>
+  <button class="tab"        data-session="Glute B" onclick="switchTab('Glute B')">Glute B</button>
+  <button class="tab"        data-session="Leg C"   onclick="switchTab('Leg C')">Leg C</button>
+  <button class="tab"        data-session="Upper"   onclick="switchTab('Upper')">Upper</button>
+  <button class="tab"        data-session="Overview" onclick="switchTab('Overview')" style="--active-color:#4B5563">Overview</button>
+  <button class="tab"        data-session="Stretch"  onclick="switchTab('Stretch')"  style="--active-color:#374151">Stretch</button>
+</div>
+
+<div class="content">
+
+  <!-- GLUTE A -->
+  <div class="session-panel active" id="panel-Glute A" data-acc="#5B21B6">
+    <div class="session-header" style="background:var(--glute-a-hdr);color:var(--glute-a);">
+      <div>
+        <h2>Glute A</h2>
+        <p>LENGTHENED + SHORTENED GLUTE STIMULUS</p>
+      </div>
+    </div>
+    <div class="past-section">
+      <div class="past-label">Past Sessions</div>
+      <div class="past-sessions-scroll">
+        <div class="loading-msg" id="past-Glute A">Loading...</div>
+      </div>
+    </div>
+    <div class="section-divider"></div>
+    <div class="log-section" style="--acc:var(--glute-a)">
+      <div class="log-header">
+        <span class="log-label">Log New Session</span>
+        <div class="session-num-wrap">
+          <label>Session #</label>
+          <input type="number" class="session-num-input" id="snum-Glute A" min="1" max="100" placeholder="1">
+        </div>
+      </div>
+      <div id="inputs-Glute A">
+        <div class="exercise-block">
+          <div class="exercise-name" style="background:var(--glute-a-bg);color:var(--glute-a)">Hip thrust</div>
+          <div class="sets-grid" id="sets-Glute A-0">
+            <div class="set-row"><span class="set-tag">SET 1</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+            <div class="set-row"><span class="set-tag">SET 2</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+            <div class="set-row"><span class="set-tag">SET 3</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+          </div>
+        </div>
+        <div class="exercise-block">
+          <div class="exercise-name" style="background:var(--glute-a-bg);color:var(--glute-a)">Back extension (glute focused)</div>
+          <div class="sets-grid" id="sets-Glute A-1">
+            <div class="set-row"><span class="set-tag">SET 1</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+            <div class="set-row"><span class="set-tag">SET 2</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+            <div class="set-row"><span class="set-tag">SET 3</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+          </div>
+        </div>
+      </div>
+      <button class="save-btn" onclick="saveSession('Glute A')">Save Session</button>
+      <div class="status-msg" id="status-Glute A"></div>
+    </div>
+  </div>
+
+  <!-- GLUTE B -->
+  <div class="session-panel" id="panel-Glute B" data-acc="#9D174D">
+    <div class="session-header" style="background:var(--glute-b-hdr);color:var(--glute-b);">
+      <div>
+        <h2>Glute B</h2>
+        <p>HIP DOMINANT + UNILATERAL GLUTE</p>
+      </div>
+    </div>
+    <div class="past-section">
+      <div class="past-label">Past Sessions</div>
+      <div class="past-sessions-scroll">
+        <div class="loading-msg" id="past-Glute B">Loading...</div>
+      </div>
+    </div>
+    <div class="section-divider"></div>
+    <div class="log-section" style="--acc:var(--glute-b)">
+      <div class="log-header">
+        <span class="log-label">Log New Session</span>
+        <div class="session-num-wrap">
+          <label>Session #</label>
+          <input type="number" class="session-num-input" id="snum-Glute B" min="1" max="100" placeholder="1">
+        </div>
+      </div>
+      <div id="inputs-Glute B">
+        <div class="exercise-block">
+          <div class="exercise-name" style="background:var(--glute-b-bg);color:var(--glute-b)">Hip thrust</div>
+          <div class="sets-grid" id="sets-Glute B-0">
+            <div class="set-row"><span class="set-tag">SET 1</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+            <div class="set-row"><span class="set-tag">SET 2</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+            <div class="set-row"><span class="set-tag">SET 3</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+          </div>
+        </div>
+        <div class="exercise-block">
+          <div class="exercise-name" style="background:var(--glute-b-bg);color:var(--glute-b)">Cable step-up kickback (per leg)</div>
+          <div class="sets-grid" id="sets-Glute B-1">
+            <div class="set-row"><span class="set-tag">SET 1</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+            <div class="set-row"><span class="set-tag">SET 2</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+            <div class="set-row"><span class="set-tag">SET 3</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+          </div>
+        </div>
+      </div>
+      <button class="save-btn" onclick="saveSession('Glute B')">Save Session</button>
+      <div class="status-msg" id="status-Glute B"></div>
+    </div>
+  </div>
+
+  <!-- LEG C -->
+  <div class="session-panel" id="panel-Leg C" data-acc="#065F46">
+    <div class="session-header" style="background:var(--leg-c-hdr);color:var(--leg-c);">
+      <div>
+        <h2>Leg C</h2>
+        <p>HAMSTRINGS + GENERAL LEG STRENGTH</p>
+      </div>
+    </div>
+    <div class="past-section">
+      <div class="past-label">Past Sessions</div>
+      <div class="past-sessions-scroll">
+        <div class="loading-msg" id="past-Leg C">Loading...</div>
+      </div>
+    </div>
+    <div class="section-divider"></div>
+    <div class="log-section" style="--acc:var(--leg-c)">
+      <div class="log-header">
+        <span class="log-label">Log New Session</span>
+        <div class="session-num-wrap">
+          <label>Session #</label>
+          <input type="number" class="session-num-input" id="snum-Leg C" min="1" max="100" placeholder="1">
+        </div>
+      </div>
+      <div id="inputs-Leg C">
+        <div class="exercise-block">
+          <div class="exercise-name" style="background:var(--leg-c-bg);color:var(--leg-c)">Romanian deadlift</div>
+          <div class="sets-grid" id="sets-Leg C-0">
+            <div class="set-row"><span class="set-tag">SET 1</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+            <div class="set-row"><span class="set-tag">SET 2</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+            <div class="set-row"><span class="set-tag">SET 3</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+          </div>
+        </div>
+        <div class="exercise-block">
+          <div class="exercise-name" style="background:var(--leg-c-bg);color:var(--leg-c)">Lunges</div>
+          <div class="sets-grid" id="sets-Leg C-1">
+            <div class="set-row"><span class="set-tag">SET 1</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+            <div class="set-row"><span class="set-tag">SET 2</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+            <div class="set-row"><span class="set-tag">SET 3</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+          </div>
+        </div>
+      </div>
+      <button class="save-btn" onclick="saveSession('Leg C')">Save Session</button>
+      <div class="status-msg" id="status-Leg C"></div>
+    </div>
+  </div>
+
+  <!-- UPPER -->
+  <div class="session-panel" id="panel-Upper" data-acc="#92400E">
+    <div class="session-header" style="background:var(--upper-hdr);color:var(--upper);">
+      <div>
+        <h2>Upper</h2>
+        <p>FUNCTIONAL STRENGTH — PULL + PRESS</p>
+      </div>
+    </div>
+    <div class="past-section">
+      <div class="past-label">Past Sessions</div>
+      <div class="past-sessions-scroll">
+        <div class="loading-msg" id="past-Upper">Loading...</div>
+      </div>
+    </div>
+    <div class="section-divider"></div>
+    <div class="log-section" style="--acc:var(--upper)">
+      <div class="log-header">
+        <span class="log-label">Log New Session</span>
+        <div class="session-num-wrap">
+          <label>Session #</label>
+          <input type="number" class="session-num-input" id="snum-Upper" min="1" max="100" placeholder="1">
+        </div>
+      </div>
+      <div id="inputs-Upper">
+        <div class="exercise-block">
+          <div class="exercise-name" style="background:var(--upper-bg);color:var(--upper)">Lat pulldown</div>
+          <div class="sets-grid" id="sets-Upper-0">
+            <div class="set-row"><span class="set-tag">SET 1</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+            <div class="set-row"><span class="set-tag">SET 2</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+          </div>
+        </div>
+        <div class="exercise-block">
+          <div class="exercise-name" style="background:var(--upper-bg);color:var(--upper)">Seated cable row</div>
+          <div class="sets-grid" id="sets-Upper-1">
+            <div class="set-row"><span class="set-tag">SET 1</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+            <div class="set-row"><span class="set-tag">SET 2</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+          </div>
+        </div>
+        <div class="exercise-block">
+          <div class="exercise-name" style="background:var(--upper-bg);color:var(--upper)">Shoulder press</div>
+          <div class="sets-grid" id="sets-Upper-2">
+            <div class="set-row"><span class="set-tag">SET 1</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+            <div class="set-row"><span class="set-tag">SET 2</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+          </div>
+        </div>
+        <div class="exercise-block">
+          <div class="exercise-name" style="background:var(--upper-bg);color:var(--upper)">Tricep pulldown</div>
+          <div class="sets-grid" id="sets-Upper-3">
+            <div class="set-row"><span class="set-tag">SET 1</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+            <div class="set-row"><span class="set-tag">SET 2</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
+          </div>
+        </div>
+      </div>
+      <button class="save-btn" onclick="saveSession('Upper')">Save Session</button>
+      <div class="status-msg" id="status-Upper"></div>
+    </div>
+  </div>
+  <!-- OVERVIEW -->
+  <div class="session-panel" id="panel-Overview">
+    <div class="overview-card" style="--ov-acc:var(--glute-a);--ov-hdr:var(--glute-a-hdr);--ov-bg:var(--glute-a-bg)">
+      <div class="ov-header"><h3>Glute A</h3><span>Lengthened + shortened glute stimulus</span></div>
+      <div class="ov-exercises">
+        <div class="ov-row"><div class="ov-name">Hip thrust</div><div class="ov-scheme">3 × 10 — 1RIR</div><div class="ov-note">Drive through heels, full lockout at top</div></div>
+        <div class="ov-row alt"><div class="ov-name">Back extension (glute focused)</div><div class="ov-scheme">3 × 10 — 1RIR</div><div class="ov-note">Toes out, round lower back, feel the squeeze</div></div>
+      </div>
+      <div class="ov-tip">Rest 2–3 min between sets. Wait at least 48hrs before Glute B.</div>
+    </div>
+    <div class="overview-card" style="--ov-acc:var(--glute-b);--ov-hdr:var(--glute-b-hdr);--ov-bg:var(--glute-b-bg)">
+      <div class="ov-header"><h3>Glute B</h3><span>Hip dominant + unilateral glute</span></div>
+      <div class="ov-exercises">
+        <div class="ov-row"><div class="ov-name">Hip thrust</div><div class="ov-scheme">3 × 10 — 1RIR</div><div class="ov-note">Go heavier than Glute A if possible</div></div>
+        <div class="ov-row alt"><div class="ov-name">Cable step-up kickback (per leg)</div><div class="ov-scheme">3 × 10 — 1RIR</div><div class="ov-note">Step up controlled, squeeze fully before lowering</div></div>
+      </div>
+      <div class="ov-tip">Rest 2–3 min. Don't do this the day after Glute A or Leg C.</div>
+    </div>
+    <div class="overview-card" style="--ov-acc:var(--leg-c);--ov-hdr:var(--leg-c-hdr);--ov-bg:var(--leg-c-bg)">
+      <div class="ov-header"><h3>Leg C</h3><span>Hamstrings + general leg strength</span></div>
+      <div class="ov-exercises">
+        <div class="ov-row"><div class="ov-name">Romanian deadlift</div><div class="ov-scheme">3 × 10 — 1RIR</div><div class="ov-note">Hinge deep, feel hamstring stretch at bottom</div></div>
+        <div class="ov-row alt"><div class="ov-name">Lunges</div><div class="ov-scheme">3 × 10 — 1RIR</div><div class="ov-note">General leg strength, controlled pace</div></div>
+      </div>
+      <div class="ov-tip">RDL overlaps with glutes — avoid doing this right after a glute session.</div>
+    </div>
+    <div class="overview-card" style="--ov-acc:var(--upper);--ov-hdr:var(--upper-hdr);--ov-bg:var(--upper-bg)">
+      <div class="ov-header"><h3>Upper</h3><span>Functional strength — pull + press</span></div>
+      <div class="ov-exercises">
+        <div class="ov-row"><div class="ov-name">Lat pulldown</div><div class="ov-scheme">2 × 6 — 1RIR</div><div class="ov-note">Full stretch at top, drive elbows down</div></div>
+        <div class="ov-row alt"><div class="ov-name">Seated cable row</div><div class="ov-scheme">2 × 6 — 1RIR</div><div class="ov-note">Chest up, squeeze shoulder blades</div></div>
+        <div class="ov-row"><div class="ov-name">Shoulder press</div><div class="ov-scheme">2 × 6 — 1RIR</div><div class="ov-note">Brace core, controlled lowering</div></div>
+        <div class="ov-row alt"><div class="ov-name">Tricep pulldown</div><div class="ov-scheme">2 × 6 — 1RIR</div><div class="ov-note">Optional — keep if you enjoy it</div></div>
+      </div>
+      <div class="ov-tip">Rest 2–3 min. Climbing covers upper pulling — don't stack this on a climbing day.</div>
+    </div>
+    <div style="margin-top:8px;">
+      <div style="font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Golden Rules</div>
+      <div class="rules-grid">
+        <div class="rule-card"><div class="rule-title">Progressive overload</div><div class="rule-body">Add weight when all sets feel easy at 1RIR — even 2.5kg counts.</div></div>
+        <div class="rule-card"><div class="rule-title">Protein target</div><div class="rule-body">~85–108g/day (1.6–2g × 54kg) to support muscle growth.</div></div>
+        <div class="rule-card"><div class="rule-title">Sets for growth</div><div class="rule-body">3–4 sets per exercise. 10–20 sets per muscle/week across 2 sessions.</div></div>
+        <div class="rule-card"><div class="rule-title">Sets for strength</div><div class="rule-body">2–4 sets of 4–8 reps, heavy weight, 2–3 min rest.</div></div>
+      </div>
+    </div>
+  </div>
+  <!-- STRETCH -->
+  <div class="session-panel" id="panel-Stretch">
+    <div class="stretch-header">
+      <h2>Stretch &amp; Mobility</h2>
+      <p>RELOAD PAGE TO SYNC WITH SHEET · TAP BOXES TO MARK COMPLETE</p>
+    </div>
+    <div id="stretch-body">
+      <div class="stretch-loading">Loading exercises...</div>
+    </div>
+    <!-- TIMER -->
+    <div class="timer-card">
+      <div class="timer-label">TIMER</div>
+      <div class="timer-controls">
+        <button class="timer-btn start" id="timer-start-btn" onclick="timerStart()">Start</button>
+        <button class="timer-btn reset" onclick="timerReset()">Reset</button>
+      </div>
+      <div class="timer-ring-wrap">
+        <svg class="timer-ring" viewBox="0 0 120 120">
+          <circle class="timer-ring-bg" cx="60" cy="60" r="50"/>
+          <circle class="timer-ring-fill" id="timer-ring-fill" cx="60" cy="60" r="50"/>
+        </svg>
+        <div class="timer-display" id="timer-display">0:30</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxgx80NQtp43UZs-SOHlEhGIPuCSVNaOjamjcBISKZTdqA-KkQpVEOlz4CySLO2TA7Z1g/exec";
+
+const SESSIONS = {
+  "Glute A": ["Hip Thrust", "Back extension"],
+  "Glute B": ["Hip Thrust", "Cable Stepup Kick"],
+  "Leg C":   ["RDL", "Lunges"],
+  "Upper":   ["Latpulldown", "Cable Row", "Shoulder Press", "Tricep Pulldown"]
+};
+
+const DISPLAY_NAMES = {
+  "Hip Thrust":        "Hip thrust",
+  "Back extension":    "Back extension (glute focused)",
+  "Cable Stepup Kick": "Cable step-up kickback (per leg)",
+  "RDL":               "Romanian deadlift",
+  "Lunges":            "Lunges",
+  "Latpulldown":       "Lat pulldown",
+  "Cable Row":         "Seated cable row",
+  "Shoulder Press":    "Shoulder press",
+  "Tricep Pulldown":   "Tricep pulldown"
+};
+
+const SETS = {
+  "Glute A": 3, "Glute B": 3, "Leg C": 3, "Upper": 2
+};
+
+// Set today's date on all date inputs
+document.addEventListener("DOMContentLoaded", () => {
+  Object.keys(SESSIONS).forEach(loadPastSessions);
+});
+
+function switchTab(session) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.session === session));
+  document.querySelectorAll(".session-panel").forEach(p => p.classList.toggle("active", p.id === `panel-${session}`));
+  if (session === "Stretch" && !stretchLoaded) {
+    stretchLoaded = true;
+    loadStretch();
+  }
+}
+
+async function loadPastSessions(session) {
+  const container = document.getElementById(`past-${session}`);
+  try {
+    const res = await fetch(`${SCRIPT_URL}?session=${encodeURIComponent(session)}`);
+    const json = await res.json();
+    const data = json.data;
+    if (!data || data.length === 0) {
+      container.innerHTML = '<div class="no-data-msg">No sessions logged yet.</div>';
+      return;
+    }
+    renderPastTable(session, data, container);
+    autoFillNextSession(session, data);
+  } catch(e) {
+    container.innerHTML = '<div class="no-data-msg">Could not load past sessions.</div>';
+  }
+}
+
+function renderPastTable(session, data, container) {
+  const exercises = SESSIONS[session];
+  const numSets = SETS[session];
+
+  // Find filled sessions by scanning row 1 (Session number row)
+  const sessionCols = [];
+  for (let c = 1; c < (data[0] || []).length; c += 2) {
+    sessionCols.push(c);
+  }
+  // Only show sessions that have at least some data
+  const filledCols = sessionCols.filter(c => {
+    for (let r = 2; r < data.length; r++) {
+      if (data[r] && (data[r][c] !== "" && data[r][c] !== undefined)) return true;
+    }
+    return false;
+  });
+
+  if (filledCols.length === 0) {
+    container.outerHTML = '<div class="no-data-msg">No sessions logged yet.</div>';
+    return;
+  }
+
+  // Find rows for each exercise (col A = index 0)
+  const exRows = {};
+  for (let r = 0; r < data.length; r++) {
+    const cellVal = String(data[r][0] || "").trim();
+    if (exercises.includes(cellVal)) {
+      exRows[cellVal] = r;
+    }
+  }
+
+  // Get session numbers from row 1 (index 1)
+  const sessionNumRow = data[1] || [];
+
+  let html = '<table class="past-table"><thead><tr>';
+  html += '<th>Exercise</th><th>Set</th>';
+  filledCols.forEach(c => {
+    const sNum = sessionNumRow[c] || ((c - 2) / 2 + 1);
+    html += `<th>#${sNum}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  exercises.forEach(ex => {
+    const startRow = exRows[ex];
+    if (startRow === undefined) return;
+    const displayName = DISPLAY_NAMES[ex] || ex;
+    for (let s = 0; s < numSets; s++) {
+      const row = data[startRow + s + 1] || [];
+      html += `<tr>`;
+      if (s === 0) html += `<td class="ex-row-label" rowspan="${numSets}">${displayName}</td>`;
+      html += `<td class="set-label">Set ${s+1}</td>`;
+      filledCols.forEach(c => {
+        const reps = row[c] || "";
+        const kg   = row[c+1] || "";
+        const val  = reps && kg ? `${reps} × ${kg}kg` : (reps || kg || "—");
+        html += `<td>${val}</td>`;
+      });
+      html += `</tr>`;
+    }
+  });
+
+  html += '</tbody></table>';
+  container.outerHTML = `<div class="past-sessions-scroll">${html}</div>`;
+}
+
+function autoFillNextSession(session, data) {
+  const sessionRow = data[1] || [];
+  let count = 0;
+  for (let c = 1; c < sessionRow.length; c += 2) {
+    // Check if any data exists in this session column
+    let hasData = false;
+    for (let r = 2; r < data.length; r++) {
+      if (data[r] && data[r][c] !== "" && data[r][c] !== undefined) { hasData = true; break; }
+    }
+    if (hasData) count++;
+  }
+  const input = document.getElementById(`snum-${session}`);
+  if (input) input.value = count + 1;
+}
+
+async function saveSession(session) {
+  const btn = document.querySelector(`#panel-${CSS.escape(session)} .save-btn`);
+  const statusEl = document.getElementById(`status-${session}`);
+  const sessionNum = parseInt(document.getElementById(`snum-${session}`).value);
+
+  if (!sessionNum || sessionNum < 1) {
+    statusEl.textContent = "Please enter a session number.";
+    statusEl.className = "status-msg error";
+    return;
+  }
+
+  const exercises = SESSIONS[session];
+  const numSets = SETS[session];
+  const exerciseData = [];
+
+  exercises.forEach((ex, exIdx) => {
+    const setsContainer = document.getElementById(`sets-${session}-${exIdx}`);
+    const inputs = setsContainer.querySelectorAll(".set-input");
+    const sets = [];
+    for (let s = 0; s < numSets; s++) {
+      sets.push({
+        reps: inputs[s*2].value || "",
+        kg:   inputs[s*2+1].value || ""
+      });
+    }
+    exerciseData.push({ exercise: ex, sets });
+  });
+
+  btn.disabled = true;
+  btn.textContent = "Saving...";
+  statusEl.textContent = "";
+  statusEl.className = "status-msg";
+
+  try {
+    await fetch(SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session, sessionNumber: sessionNum, exercises: exerciseData })
+    });
+
+    statusEl.textContent = `Session ${sessionNum} saved!`;
+    statusEl.className = "status-msg success";
+    btn.textContent = "Saved ✓";
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = "Save Session";
+      loadPastSessions(session);
+    }, 2000);
+  } catch(e) {
+    statusEl.textContent = "Error saving. Check your connection.";
+    statusEl.className = "status-msg error";
+    btn.disabled = false;
+    btn.textContent = "Save Session";
+  }
+}
+
+// ── STRETCH ───────────────────────────────────────────────────────────────────
+async function loadStretch() {
+  const body = document.getElementById("stretch-body");
+  try {
+    const res = await fetch(`${SCRIPT_URL}?session=Stretch`);
+    const json = await res.json();
+    const data = json.data;
+    if (!data || data.length < 2) {
+      body.innerHTML = '<div class="stretch-loading">No exercises found.</div>';
+      return;
+    }
+
+    // Row 0: headers (col 0 = name, col 1..n = session labels)
+    // Rows 1+: exercise name in col 0, values in cols 1..n
+    const headers = data[0];
+    const sessionLabels = headers.slice(1).filter(h => h !== "");
+    let html = "";
+
+    for (let r = 1; r < data.length; r++) {
+      const row = data[r];
+      const exName = String(row[0] || "").trim();
+      if (!exName) continue;
+      const tabs = row.slice(1, 1 + sessionLabels.length);
+      const tabsHtml = tabs.map((val, i) => {
+        const label = val || sessionLabels[i] || `Set ${i+1}`;
+        return `<button class="stretch-tab" onclick="toggleStretchTab(this)">${label}</button>`;
+      }).join("");
+      html += `<div class="stretch-exercise"><div class="stretch-ex-name">${exName}</div><div class="stretch-tabs">${tabsHtml}</div></div>`;
+    }
+
+    body.innerHTML = html || '<div class="stretch-loading">No exercises found.</div>';
+  } catch(e) {
+    body.innerHTML = '<div class="stretch-loading">Could not load exercises.</div>';
+  }
+}
+
+function toggleStretchTab(el) {
+  el.classList.toggle("done");
+}
+
+// Load stretch when tab is first opened
+let stretchLoaded = false;
+
+// ── TIMER ─────────────────────────────────────────────────────────────────────
+let timerTotal = 30;
+let timerLeft = 30;
+let timerInterval = null;
+const CIRCUMFERENCE = 314;
+
+function timerUpdate() {
+  const pct = timerLeft / timerTotal;
+  document.getElementById("timer-ring-fill").style.strokeDashoffset = CIRCUMFERENCE * (1 - pct);
+  const fill = document.getElementById("timer-ring-fill");
+  if (pct > 0.5) fill.style.stroke = "#065F46";
+  else if (pct > 0.2) fill.style.stroke = "#92400E";
+  else fill.style.stroke = "#9D174D";
+  const secs = Math.max(0, timerLeft);
+  document.getElementById("timer-display").textContent = `0:${String(secs).padStart(2,"0")}`;
+}
+
+function timerStart() {
+  const btn = document.getElementById("timer-start-btn");
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    btn.textContent = "Start";
+    return;
+  }
+  if (timerLeft <= 0) timerReset();
+  btn.textContent = "Pause";
+  timerInterval = setInterval(() => {
+    timerLeft--;
+    timerUpdate();
+    if (timerLeft <= 0) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      btn.textContent = "Start";
+      // Flash done
+      document.getElementById("timer-ring-fill").style.stroke = "#065F46";
+      document.getElementById("timer-display").textContent = "Done!";
+    }
+  }, 1000);
+}
+
+function timerReset() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  timerLeft = timerTotal;
+  document.getElementById("timer-start-btn").textContent = "Start";
+  document.getElementById("timer-ring-fill").style.strokeDashoffset = 0;
+  document.getElementById("timer-ring-fill").style.stroke = "#065F46";
+  document.getElementById("timer-display").textContent = "0:30";
+}
+</script>
+</body>
+</html>
