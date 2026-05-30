@@ -423,17 +423,13 @@
   .stretch-exercise:last-of-type { border-radius: 0 0 var(--radius) var(--radius); }
 
   .stretch-ex-name {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    font-weight: 500;
-    color: #374151;
-    background: #E5E7EB;
-    border: 1.5px solid #9CA3AF;
-    border-radius: 20px;
-    padding: 7px 14px;
+    font-family: 'Fraunces', serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
     white-space: nowrap;
     flex-shrink: 0;
-    cursor: default;
+    letter-spacing: -0.2px;
   }
 
   .stretch-tabs-scroll {
@@ -1022,17 +1018,16 @@ async function loadStretch() {
       const row = data[r];
       const exName = String(row[0] || "").trim();
       if (!exName) continue;
-      // Only include cells that have actual content (not empty, not just a number from header)
       const tabs = row.slice(1).filter(v => {
         const s = String(v).trim();
         return s !== "" && s !== "0" && isNaN(s);
       });
-      if (!tabs.length) continue;
+      if (!tabs.length) continue; // skip rows with no valid tabs (like "sm")
       const tabsHtml = tabs.map(val =>
         `<button class="stretch-tab" onclick="toggleStretchTab(this)">${val}</button>`
       ).join("");
       html += `<div class="stretch-exercise">
-        <button class="stretch-ex-name">${exName}</button>
+        <span class="stretch-ex-name">${exName}</span>
         <div class="stretch-tabs-scroll">${tabsHtml}</div>
       </div>`;
     }
