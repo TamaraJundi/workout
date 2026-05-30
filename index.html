@@ -448,6 +448,7 @@
     color: var(--text);
     white-space: nowrap;
     flex-shrink: 0;
+    width: 130px;
     letter-spacing: -0.2px;
   }
 
@@ -1039,7 +1040,7 @@ async function loadStretch() {
     for (let r = 1; r < data.length; r++) {
       const row = data[r];
       const exName = String(row[0] || "").trim();
-      if (!exName) continue;
+      if (!exName || exName.length < 3) continue;
       const tabs = row.slice(1).filter(v => {
         const s = String(v).trim();
         return s !== "" && s !== "0" && isNaN(s);
