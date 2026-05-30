@@ -411,6 +411,55 @@
   }
   .stretch-header h2 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 18px; color: #27272A; }
   .stretch-header p { font-size: 10px; color: var(--muted); margin-top: 3px; letter-spacing: 0.04em; }
+  .stretch-header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .stretch-progress-pill {
+    position: relative;
+    width: 100px;
+    height: 30px;
+    background: #E5E7EB;
+    border: 1.5px solid #9CA3AF;
+    border-radius: 20px;
+    overflow: hidden;
+  }
+  .stretch-progress-fill {
+    position: absolute;
+    top: 0; left: 0;
+    height: 100%;
+    background: #D1FAE5;
+    border-radius: 20px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+  .stretch-progress-label {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: #374151;
+    z-index: 1;
+    white-space: nowrap;
+  }
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    border: 1.5px solid #9CA3AF;
+    border-radius: 20px;
+    background: transparent;
+    color: #6B6860;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
   .stretch-reset-btn {
     font-family: 'DM Mono', monospace;
     font-size: 10px;
@@ -802,7 +851,13 @@
         <h2>Stretch &amp; Mobility</h2>
         <p>RELOADS FROM SHEET ON PAGE LOAD · TAP TO MARK COMPLETE</p>
       </div>
-      <button class="stretch-reset-btn" onclick="resetStretch()">Reset</button>
+      <div class="stretch-header-right">
+        <div class="stretch-progress-pill" id="stretch-progress-pill">
+          <div class="stretch-progress-fill" id="stretch-progress-fill"></div>
+          <span class="stretch-progress-label" id="stretch-progress-label">0%</span>
+        </div>
+        <button class="stretch-reset-btn" onclick="resetStretch()">Reset</button>
+      </div>
     </div>
     <div id="stretch-body">
       <div class="stretch-loading">Loading exercises...</div>
@@ -1065,6 +1120,7 @@ async function loadStretch() {
 function toggleStretchTab(el) {
   el.classList.toggle("done");
   saveStretchState();
+  updateStretchProgress();
 }
 
 function getTabKey(el) {
@@ -1087,11 +1143,24 @@ function loadStretchState() {
   document.querySelectorAll(".stretch-tab").forEach(el => {
     if (done.includes(getTabKey(el))) el.classList.add("done");
   });
+  updateStretchProgress();
 }
 
 function resetStretch() {
   localStorage.removeItem("stretchDone");
   document.querySelectorAll(".stretch-tab").forEach(el => el.classList.remove("done"));
+  updateStretchProgress();
+}
+
+function updateStretchProgress() {
+  const total = document.querySelectorAll(".stretch-tab").length;
+  const done  = document.querySelectorAll(".stretch-tab.done").length;
+  const pct   = total === 0 ? 0 : Math.round((done / total) * 100);
+  document.getElementById("stretch-progress-fill").style.width = pct + "%";
+  document.getElementById("stretch-progress-label").textContent = pct + "%";
+  // Turn fully green border when complete
+  const pill = document.getElementById("stretch-progress-pill");
+  pill.style.borderColor = pct === 100 ? "#065F46" : "#9CA3AF";
 }
 
 // Load stretch when tab is first opened
