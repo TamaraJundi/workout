@@ -1040,7 +1040,7 @@ async function loadStretch() {
     for (let r = 1; r < data.length; r++) {
       const row = data[r];
       const exName = String(row[0] || "").trim();
-      if (!exName || exName.length < 3) continue;
+      if (!exName) continue;
       const tabs = row.slice(1).filter(v => {
         const s = String(v).trim();
         return s !== "" && s !== "0" && isNaN(s);
@@ -1067,10 +1067,17 @@ function toggleStretchTab(el) {
   saveStretchState();
 }
 
+function getTabKey(el) {
+  const exName = el.closest(".stretch-exercise").querySelector(".stretch-ex-name").textContent;
+  const allTabs = Array.from(el.closest(".stretch-tabs-scroll").querySelectorAll(".stretch-tab"));
+  const idx = allTabs.indexOf(el);
+  return `${exName}|${idx}|${el.textContent}`;
+}
+
 function saveStretchState() {
   const done = [];
   document.querySelectorAll(".stretch-tab.done").forEach(el => {
-    done.push(el.textContent + "|" + el.closest(".stretch-exercise").querySelector(".stretch-ex-name").textContent);
+    done.push(getTabKey(el));
   });
   localStorage.setItem("stretchDone", JSON.stringify(done));
 }
@@ -1078,8 +1085,7 @@ function saveStretchState() {
 function loadStretchState() {
   const done = JSON.parse(localStorage.getItem("stretchDone") || "[]");
   document.querySelectorAll(".stretch-tab").forEach(el => {
-    const key = el.textContent + "|" + el.closest(".stretch-exercise").querySelector(".stretch-ex-name").textContent;
-    if (done.includes(key)) el.classList.add("done");
+    if (done.includes(getTabKey(el))) el.classList.add("done");
   });
 }
 
