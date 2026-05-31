@@ -466,7 +466,8 @@
     font-weight: 500;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    padding: 7px 14px;
+    padding: 0 14px;
+    height: 30px;
     border: 1.5px solid #9CA3AF;
     border-radius: 20px;
     background: transparent;
@@ -474,6 +475,10 @@
     cursor: pointer;
     transition: all 0.15s;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    appearance: none;
+    -webkit-appearance: none;
   }
   .stretch-reset-btn:hover { border-color: #9F1239; color: #9F1239; }
 
@@ -849,7 +854,6 @@
     <div class="stretch-header">
       <div>
         <h2>Stretch &amp; Mobility</h2>
-        <p>RELOADS FROM SHEET ON PAGE LOAD · TAP TO MARK COMPLETE</p>
       </div>
       <div class="stretch-header-right">
         <div class="stretch-progress-pill" id="stretch-progress-pill">
