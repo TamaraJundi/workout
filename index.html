@@ -405,78 +405,9 @@
     border: 1px solid var(--border);
     border-radius: var(--radius) var(--radius) 0 0;
     padding: 14px 18px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
   }
   .stretch-header h2 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 18px; color: #27272A; }
   .stretch-header p { font-size: 10px; color: var(--muted); margin-top: 3px; letter-spacing: 0.04em; }
-  .stretch-header-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
-  }
-  .stretch-progress-pill {
-    position: relative;
-    width: 100px;
-    height: 30px;
-    background: #E5E7EB;
-    border: 1.5px solid #9CA3AF;
-    border-radius: 20px;
-    overflow: hidden;
-  }
-  .stretch-progress-fill {
-    position: absolute;
-    top: 0; left: 0;
-    height: 100%;
-    background: #D1FAE5;
-    border-radius: 20px;
-    transition: width 0.4s ease;
-    width: 0%;
-  }
-  .stretch-progress-label {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    font-weight: 500;
-    color: #374151;
-    z-index: 1;
-    white-space: nowrap;
-  }
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    padding: 7px 14px;
-    border: 1.5px solid #9CA3AF;
-    border-radius: 20px;
-    background: transparent;
-    color: #6B6860;
-    cursor: pointer;
-    transition: all 0.15s;
-    flex-shrink: 0;
-  }
-  .stretch-reset-btn {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    padding: 0;
-    border: none;
-    border-radius: 0;
-    background: transparent;
-    color: var(--muted);
-    cursor: pointer;
-    -webkit-appearance: none;
-    appearance: none;
-    outline: none;
-  }
-  .stretch-reset-btn:hover { color: #9F1239; }
 
   .stretch-loading { font-size: 12px; color: var(--muted); font-style: italic; padding: 20px 18px; background: var(--surface); border: 1px solid var(--border); border-top: none; }
 
@@ -484,48 +415,23 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-top: none;
-    padding: 12px 18px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    padding: 14px 18px;
   }
   .stretch-exercise:last-of-type { border-radius: 0 0 var(--radius) var(--radius); }
-
-  .stretch-ex-name {
-    font-family: 'Fraunces', serif;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-    white-space: nowrap;
-    flex-shrink: 0;
-    width: 130px;
-    letter-spacing: -0.2px;
-  }
-
-  .stretch-tabs-scroll {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    padding-bottom: 2px;
-    flex: 1;
-  }
-  .stretch-tabs-scroll::-webkit-scrollbar { display: none; }
-
+  .stretch-ex-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 10px; }
+  .stretch-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
   .stretch-tab {
     font-family: 'DM Mono', monospace;
     font-size: 11px;
     font-weight: 500;
     padding: 6px 14px;
     border-radius: 20px;
-    border: 1.5px solid #9CA3AF;
-    background: #E5E7EB;
-    color: #374151;
+    border: 1.5px solid var(--border);
+    background: #F1F0ED;
+    color: var(--muted);
     cursor: pointer;
     transition: all 0.15s;
     user-select: none;
-    white-space: nowrap;
-    flex-shrink: 0;
   }
   .stretch-tab.done {
     background: #D1FAE5;
@@ -577,6 +483,15 @@
   .timer-btn.reset { background: transparent; color: var(--muted); }
   .timer-btn.reset:hover { border-color: var(--muted); color: var(--text); }
 
+  .wake-note {
+    font-size: 9px;
+    color: var(--muted);
+    opacity: 0.7;
+    text-align: center;
+    letter-spacing: 0.03em;
+    min-height: 12px;
+  }
+
   @media (max-width: 500px) {
     .ov-row { grid-template-columns: 1fr 1fr; }
     .ov-note { display: none; }
@@ -627,24 +542,7 @@
           <input type="number" class="session-num-input" id="snum-Glute A" min="1" max="100" placeholder="1">
         </div>
       </div>
-      <div id="inputs-Glute A">
-        <div class="exercise-block">
-          <div class="exercise-name" style="background:var(--glute-a-bg);color:var(--glute-a)">Hip thrust</div>
-          <div class="sets-grid" id="sets-Glute A-0">
-            <div class="set-row"><span class="set-tag">SET 1</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-            <div class="set-row"><span class="set-tag">SET 2</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-            <div class="set-row"><span class="set-tag">SET 3</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-          </div>
-        </div>
-        <div class="exercise-block">
-          <div class="exercise-name" style="background:var(--glute-a-bg);color:var(--glute-a)">Back extension (glute focused)</div>
-          <div class="sets-grid" id="sets-Glute A-1">
-            <div class="set-row"><span class="set-tag">SET 1</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-            <div class="set-row"><span class="set-tag">SET 2</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-            <div class="set-row"><span class="set-tag">SET 3</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-          </div>
-        </div>
-      </div>
+      <div id="inputs-Glute A"></div>
       <button class="save-btn" onclick="saveSession('Glute A')">Save Session</button>
       <div class="status-msg" id="status-Glute A"></div>
     </div>
@@ -673,24 +571,7 @@
           <input type="number" class="session-num-input" id="snum-Glute B" min="1" max="100" placeholder="1">
         </div>
       </div>
-      <div id="inputs-Glute B">
-        <div class="exercise-block">
-          <div class="exercise-name" style="background:var(--glute-b-bg);color:var(--glute-b)">Hip thrust</div>
-          <div class="sets-grid" id="sets-Glute B-0">
-            <div class="set-row"><span class="set-tag">SET 1</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-            <div class="set-row"><span class="set-tag">SET 2</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-            <div class="set-row"><span class="set-tag">SET 3</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-          </div>
-        </div>
-        <div class="exercise-block">
-          <div class="exercise-name" style="background:var(--glute-b-bg);color:var(--glute-b)">Cable step-up kickback (per leg)</div>
-          <div class="sets-grid" id="sets-Glute B-1">
-            <div class="set-row"><span class="set-tag">SET 1</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-            <div class="set-row"><span class="set-tag">SET 2</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-            <div class="set-row"><span class="set-tag">SET 3</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-          </div>
-        </div>
-      </div>
+      <div id="inputs-Glute B"></div>
       <button class="save-btn" onclick="saveSession('Glute B')">Save Session</button>
       <div class="status-msg" id="status-Glute B"></div>
     </div>
@@ -719,24 +600,7 @@
           <input type="number" class="session-num-input" id="snum-Leg C" min="1" max="100" placeholder="1">
         </div>
       </div>
-      <div id="inputs-Leg C">
-        <div class="exercise-block">
-          <div class="exercise-name" style="background:var(--leg-c-bg);color:var(--leg-c)">Romanian deadlift</div>
-          <div class="sets-grid" id="sets-Leg C-0">
-            <div class="set-row"><span class="set-tag">SET 1</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-            <div class="set-row"><span class="set-tag">SET 2</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-            <div class="set-row"><span class="set-tag">SET 3</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-          </div>
-        </div>
-        <div class="exercise-block">
-          <div class="exercise-name" style="background:var(--leg-c-bg);color:var(--leg-c)">Lunges</div>
-          <div class="sets-grid" id="sets-Leg C-1">
-            <div class="set-row"><span class="set-tag">SET 1</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-            <div class="set-row"><span class="set-tag">SET 2</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-            <div class="set-row"><span class="set-tag">SET 3</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-          </div>
-        </div>
-      </div>
+      <div id="inputs-Leg C"></div>
       <button class="save-btn" onclick="saveSession('Leg C')">Save Session</button>
       <div class="status-msg" id="status-Leg C"></div>
     </div>
@@ -765,36 +629,7 @@
           <input type="number" class="session-num-input" id="snum-Upper" min="1" max="100" placeholder="1">
         </div>
       </div>
-      <div id="inputs-Upper">
-        <div class="exercise-block">
-          <div class="exercise-name" style="background:var(--upper-bg);color:var(--upper)">Lat pulldown</div>
-          <div class="sets-grid" id="sets-Upper-0">
-            <div class="set-row"><span class="set-tag">SET 1</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-            <div class="set-row"><span class="set-tag">SET 2</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-          </div>
-        </div>
-        <div class="exercise-block">
-          <div class="exercise-name" style="background:var(--upper-bg);color:var(--upper)">Seated cable row</div>
-          <div class="sets-grid" id="sets-Upper-1">
-            <div class="set-row"><span class="set-tag">SET 1</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-            <div class="set-row"><span class="set-tag">SET 2</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-          </div>
-        </div>
-        <div class="exercise-block">
-          <div class="exercise-name" style="background:var(--upper-bg);color:var(--upper)">Shoulder press</div>
-          <div class="sets-grid" id="sets-Upper-2">
-            <div class="set-row"><span class="set-tag">SET 1</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-            <div class="set-row"><span class="set-tag">SET 2</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-          </div>
-        </div>
-        <div class="exercise-block">
-          <div class="exercise-name" style="background:var(--upper-bg);color:var(--upper)">Tricep pulldown</div>
-          <div class="sets-grid" id="sets-Upper-3">
-            <div class="set-row"><span class="set-tag">SET 1</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-            <div class="set-row"><span class="set-tag">SET 2</span><div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div><div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>
-          </div>
-        </div>
-      </div>
+      <div id="inputs-Upper"></div>
       <button class="save-btn" onclick="saveSession('Upper')">Save Session</button>
       <div class="status-msg" id="status-Upper"></div>
     </div>
@@ -848,16 +683,8 @@
   <!-- STRETCH -->
   <div class="session-panel" id="panel-Stretch">
     <div class="stretch-header">
-      <div>
-        <h2>Stretch &amp; Mobility</h2>
-      </div>
-      <div class="stretch-header-right">
-        <div class="stretch-progress-pill" id="stretch-progress-pill">
-          <div class="stretch-progress-fill" id="stretch-progress-fill"></div>
-          <span class="stretch-progress-label" id="stretch-progress-label">0%</span>
-        </div>
-        <button class="stretch-reset-btn" onclick="resetStretch()">Reset</button>
-      </div>
+      <h2>Stretch &amp; Mobility</h2>
+      <p>RELOAD PAGE TO SYNC WITH SHEET · TAP BOXES TO MARK COMPLETE</p>
     </div>
     <div id="stretch-body">
       <div class="stretch-loading">Loading exercises...</div>
@@ -876,6 +703,7 @@
         </svg>
         <div class="timer-display" id="timer-display">0:30</div>
       </div>
+      <div class="wake-note" id="wake-note"></div>
     </div>
   </div>
 
@@ -883,32 +711,80 @@
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxgx80NQtp43UZs-SOHlEhGIPuCSVNaOjamjcBISKZTdqA-KkQpVEOlz4CySLO2TA7Z1g/exec";
 
-const SESSIONS = {
-  "Glute A": ["Hip Thrust", "Back extension"],
-  "Glute B": ["Hip Thrust", "Cable Stepup Kick"],
-  "Leg C":   ["RDL", "Lunges"],
-  "Upper":   ["Latpulldown", "Cable Row", "Shoulder Press", "Tricep Pulldown"]
+// Only used for coloring the input form — has no bearing on which exercises exist.
+// Exercise names, counts, and set counts are all read live from the sheet.
+const SESSION_STYLE = {
+  "Glute A": { bg: "var(--glute-a-bg)", color: "var(--glute-a)" },
+  "Glute B": { bg: "var(--glute-b-bg)", color: "var(--glute-b)" },
+  "Leg C":   { bg: "var(--leg-c-bg)",   color: "var(--leg-c)" },
+  "Upper":   { bg: "var(--upper-bg)",   color: "var(--upper)" }
 };
+const SESSION_NAMES = Object.keys(SESSION_STYLE);
 
-const DISPLAY_NAMES = {
-  "Hip Thrust":        "Hip thrust",
-  "Back extension":    "Back extension (glute focused)",
-  "Cable Stepup Kick": "Cable step-up kickback (per leg)",
-  "RDL":               "Romanian deadlift",
-  "Lunges":            "Lunges",
-  "Latpulldown":       "Lat pulldown",
-  "Cable Row":         "Seated cable row",
-  "Shoulder Press":    "Shoulder press",
-  "Tricep Pulldown":   "Tricep pulldown"
-};
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
 
-const SETS = {
-  "Glute A": 3, "Glute B": 3, "Leg C": 3, "Upper": 2
-};
+// Reads the raw sheet grid and finds every exercise the same way a human would:
+// a row whose column A has a name and whose column B says "REPS" is an exercise
+// header; the "Set N" rows directly under it belong to that exercise. The name
+// used everywhere downstream (display, save) is this literal cell text — so a
+// save can never mismatch the cell it's meant to fill.
+function parseSessionGrid(data) {
+  const exercises = [];
+  let r = 2; // row 0 = title, row 1 = session numbers
+  while (r < data.length) {
+    const nameCell = String((data[r] && data[r][0]) || "").trim();
+    const bCell = String((data[r] && data[r][1]) || "").trim().toUpperCase();
+    if (nameCell && bCell === "REPS") {
+      const headerRow = r;
+      let numSets = 0;
+      let sr = r + 1;
+      while (sr < data.length) {
+        const setLabel = String((data[sr] && data[sr][0]) || "").trim();
+        if (/^set\s*\d+/i.test(setLabel)) {
+          numSets++;
+          sr++;
+        } else {
+          break;
+        }
+      }
+      if (numSets > 0) exercises.push({ name: nameCell, headerRow, numSets });
+      r = sr;
+    } else {
+      r++;
+    }
+  }
+  return exercises;
+}
+
+// Builds the "Log New Session" inputs directly from the parsed sheet structure.
+// Each exercise-block carries data-exercise = the exact cell text, so saveSession()
+// never has to guess or hardcode a name.
+function buildLogInputs(session, exercises) {
+  const container = document.getElementById(`inputs-${session}`);
+  if (!container) return;
+  const style = SESSION_STYLE[session] || { bg: "#F1F0ED", color: "#3A3A38" };
+  let html = "";
+  exercises.forEach((ex, idx) => {
+    html += `<div class="exercise-block" data-exercise="${escapeHtml(ex.name)}">`;
+    html += `<div class="exercise-name" style="background:${style.bg};color:${style.color}">${escapeHtml(ex.name)}</div>`;
+    html += `<div class="sets-grid" id="sets-${session}-${idx}">`;
+    for (let s = 0; s < ex.numSets; s++) {
+      html += `<div class="set-row"><span class="set-tag">SET ${s + 1}</span>`
+        + `<div class="set-input-wrap"><span>Reps</span><input type="number" class="set-input" placeholder="—"></div>`
+        + `<div class="set-input-wrap"><span>Kg</span><input type="number" class="set-input" placeholder="—" step="0.5"></div></div>`;
+    }
+    html += `</div></div>`;
+  });
+  container.innerHTML = html || '<div class="no-data-msg">No exercises found for this session.</div>';
+}
 
 // Set today's date on all date inputs
 document.addEventListener("DOMContentLoaded", () => {
-  Object.keys(SESSIONS).forEach(loadPastSessions);
+  SESSION_NAMES.forEach(loadPastSessions);
 });
 
 function switchTab(session) {
@@ -930,17 +806,16 @@ async function loadPastSessions(session) {
       container.innerHTML = '<div class="no-data-msg">No sessions logged yet.</div>';
       return;
     }
-    renderPastTable(session, data, container);
+    const exercises = parseSessionGrid(data);
+    buildLogInputs(session, exercises);
+    renderPastTable(session, data, exercises, container);
     autoFillNextSession(session, data);
   } catch(e) {
     container.innerHTML = '<div class="no-data-msg">Could not load past sessions.</div>';
   }
 }
 
-function renderPastTable(session, data, container) {
-  const exercises = SESSIONS[session];
-  const numSets = SETS[session];
-
+function renderPastTable(session, data, exercises, container) {
   // Find filled sessions by scanning row 1 (Session number row)
   const sessionCols = [];
   for (let c = 1; c < (data[0] || []).length; c += 2) {
@@ -959,15 +834,6 @@ function renderPastTable(session, data, container) {
     return;
   }
 
-  // Find rows for each exercise (col A = index 0)
-  const exRows = {};
-  for (let r = 0; r < data.length; r++) {
-    const cellVal = String(data[r][0] || "").trim();
-    if (exercises.includes(cellVal)) {
-      exRows[cellVal] = r;
-    }
-  }
-
   // Get session numbers from row 1 (index 1)
   const sessionNumRow = data[1] || [];
 
@@ -980,13 +846,10 @@ function renderPastTable(session, data, container) {
   html += '</tr></thead><tbody>';
 
   exercises.forEach(ex => {
-    const startRow = exRows[ex];
-    if (startRow === undefined) return;
-    const displayName = DISPLAY_NAMES[ex] || ex;
-    for (let s = 0; s < numSets; s++) {
-      const row = data[startRow + s + 1] || [];
+    for (let s = 0; s < ex.numSets; s++) {
+      const row = data[ex.headerRow + s + 1] || [];
       html += `<tr>`;
-      if (s === 0) html += `<td class="ex-row-label" rowspan="${numSets}">${displayName}</td>`;
+      if (s === 0) html += `<td class="ex-row-label" rowspan="${ex.numSets}">${escapeHtml(ex.name)}</td>`;
       html += `<td class="set-label">Set ${s+1}</td>`;
       filledCols.forEach(c => {
         const reps = row[c] || "";
@@ -1028,21 +891,27 @@ async function saveSession(session) {
     return;
   }
 
-  const exercises = SESSIONS[session];
-  const numSets = SETS[session];
-  const exerciseData = [];
+  const inputsContainer = document.getElementById(`inputs-${session}`);
+  const blocks = inputsContainer.querySelectorAll(".exercise-block");
+  if (blocks.length === 0) {
+    statusEl.textContent = "Exercise list hasn't loaded yet — try again in a moment.";
+    statusEl.className = "status-msg error";
+    return;
+  }
 
-  exercises.forEach((ex, exIdx) => {
-    const setsContainer = document.getElementById(`sets-${session}-${exIdx}`);
-    const inputs = setsContainer.querySelectorAll(".set-input");
+  const exerciseData = [];
+  blocks.forEach(block => {
+    const exName = block.dataset.exercise; // exact text from the sheet cell
+    const setRows = block.querySelectorAll(".set-row");
     const sets = [];
-    for (let s = 0; s < numSets; s++) {
+    setRows.forEach(row => {
+      const inputs = row.querySelectorAll(".set-input");
       sets.push({
-        reps: inputs[s*2].value || "",
-        kg:   inputs[s*2+1].value || ""
+        reps: inputs[0].value || "",
+        kg:   inputs[1].value || ""
       });
-    }
-    exerciseData.push({ exercise: ex, sets });
+    });
+    exerciseData.push({ exercise: exName, sets });
   });
 
   btn.disabled = true;
@@ -1096,22 +965,15 @@ async function loadStretch() {
       const row = data[r];
       const exName = String(row[0] || "").trim();
       if (!exName) continue;
-      const tabs = row.slice(1).filter(v => {
-        const s = String(v).trim();
-        return s !== "" && s !== "0" && isNaN(s);
-      });
-      if (!tabs.length) continue; // skip rows with no valid tabs (like "sm")
-      const tabsHtml = tabs.map(val =>
-        `<button class="stretch-tab" onclick="toggleStretchTab(this)">${val}</button>`
-      ).join("");
-      html += `<div class="stretch-exercise">
-        <span class="stretch-ex-name">${exName}</span>
-        <div class="stretch-tabs-scroll">${tabsHtml}</div>
-      </div>`;
+      const tabs = row.slice(1, 1 + sessionLabels.length);
+      const tabsHtml = tabs.map((val, i) => {
+        const label = val || sessionLabels[i] || `Set ${i+1}`;
+        return `<button class="stretch-tab" onclick="toggleStretchTab(this)">${label}</button>`;
+      }).join("");
+      html += `<div class="stretch-exercise"><div class="stretch-ex-name">${exName}</div><div class="stretch-tabs">${tabsHtml}</div></div>`;
     }
 
     body.innerHTML = html || '<div class="stretch-loading">No exercises found.</div>';
-    loadStretchState();
   } catch(e) {
     body.innerHTML = '<div class="stretch-loading">Could not load exercises.</div>';
   }
@@ -1119,52 +981,46 @@ async function loadStretch() {
 
 function toggleStretchTab(el) {
   el.classList.toggle("done");
-  saveStretchState();
-  updateStretchProgress();
-}
-
-function getTabKey(el) {
-  const exName = el.closest(".stretch-exercise").querySelector(".stretch-ex-name").textContent;
-  const allTabs = Array.from(el.closest(".stretch-tabs-scroll").querySelectorAll(".stretch-tab"));
-  const idx = allTabs.indexOf(el);
-  return `${exName}|${idx}|${el.textContent}`;
-}
-
-function saveStretchState() {
-  const done = [];
-  document.querySelectorAll(".stretch-tab.done").forEach(el => {
-    done.push(getTabKey(el));
-  });
-  localStorage.setItem("stretchDone", JSON.stringify(done));
-}
-
-function loadStretchState() {
-  const done = JSON.parse(localStorage.getItem("stretchDone") || "[]");
-  document.querySelectorAll(".stretch-tab").forEach(el => {
-    if (done.includes(getTabKey(el))) el.classList.add("done");
-  });
-  updateStretchProgress();
-}
-
-function resetStretch() {
-  localStorage.removeItem("stretchDone");
-  document.querySelectorAll(".stretch-tab").forEach(el => el.classList.remove("done"));
-  updateStretchProgress();
-}
-
-function updateStretchProgress() {
-  const total = document.querySelectorAll(".stretch-tab").length;
-  const done  = document.querySelectorAll(".stretch-tab.done").length;
-  const pct   = total === 0 ? 0 : Math.round((done / total) * 100);
-  document.getElementById("stretch-progress-fill").style.width = pct + "%";
-  document.getElementById("stretch-progress-label").textContent = pct + "%";
-  // Turn fully green border when complete
-  const pill = document.getElementById("stretch-progress-pill");
-  pill.style.borderColor = pct === 100 ? "#065F46" : "#9CA3AF";
 }
 
 // Load stretch when tab is first opened
 let stretchLoaded = false;
+
+// ── WAKE LOCK ─────────────────────────────────────────────────────────────────
+// Keeps the screen from turning off while the rest timer is running.
+let wakeLock = null;
+
+async function acquireWakeLock() {
+  const noteEl = document.getElementById("wake-note");
+  try {
+    if ("wakeLock" in navigator) {
+      wakeLock = await navigator.wakeLock.request("screen");
+      if (noteEl) noteEl.textContent = "";
+      wakeLock.addEventListener("release", () => {
+        wakeLock = null;
+      });
+    } else {
+      if (noteEl) noteEl.textContent = "Screen may still lock — not supported on this browser.";
+    }
+  } catch (err) {
+    // Common cause: tab not visible, or permission denied — fails silently, timer still runs.
+    if (noteEl) noteEl.textContent = "";
+  }
+}
+
+async function releaseWakeLock() {
+  if (wakeLock) {
+    try { await wakeLock.release(); } catch (err) {}
+    wakeLock = null;
+  }
+}
+
+// Re-acquire the wake lock if the tab regains visibility while the timer is still running
+document.addEventListener("visibilitychange", async () => {
+  if (document.visibilityState === "visible" && timerInterval && !wakeLock) {
+    await acquireWakeLock();
+  }
+});
 
 // ── TIMER ─────────────────────────────────────────────────────────────────────
 let timerTotal = 30;
@@ -1189,10 +1045,12 @@ function timerStart() {
     clearInterval(timerInterval);
     timerInterval = null;
     btn.textContent = "Start";
+    releaseWakeLock();
     return;
   }
   if (timerLeft <= 0) timerReset();
   btn.textContent = "Pause";
+  acquireWakeLock();
   timerInterval = setInterval(() => {
     timerLeft--;
     timerUpdate();
@@ -1200,6 +1058,7 @@ function timerStart() {
       clearInterval(timerInterval);
       timerInterval = null;
       btn.textContent = "Start";
+      releaseWakeLock();
       // Flash done
       document.getElementById("timer-ring-fill").style.stroke = "#065F46";
       document.getElementById("timer-display").textContent = "Done!";
@@ -1215,6 +1074,7 @@ function timerReset() {
   document.getElementById("timer-ring-fill").style.strokeDashoffset = 0;
   document.getElementById("timer-ring-fill").style.stroke = "#065F46";
   document.getElementById("timer-display").textContent = "0:30";
+  releaseWakeLock();
 }
 </script>
 </body>
