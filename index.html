@@ -957,20 +957,20 @@ async function loadStretch() {
 
     // Row 0: headers (col 0 = name, col 1..n = session labels)
     // Rows 1+: exercise name in col 0, values in cols 1..n
-    const headers = data[0];
-    const sessionLabels = headers.slice(1).filter(h => h !== "");
     let html = "";
 
     for (let r = 1; r < data.length; r++) {
       const row = data[r];
       const exName = String(row[0] || "").trim();
       if (!exName) continue;
-      const tabs = row.slice(1, 1 + sessionLabels.length);
-      const tabsHtml = tabs.map((val, i) => {
-        const label = val || sessionLabels[i] || `Set ${i+1}`;
-        return `<button class="stretch-tab" onclick="toggleStretchTab(this)">${label}</button>`;
-      }).join("");
-      html += `<div class="stretch-exercise"><div class="stretch-ex-name">${exName}</div><div class="stretch-tabs">${tabsHtml}</div></div>`;
+      const tabs = row.slice(1)
+        .map(v => String(v || "").trim())
+        .filter(v => v !== "" && !/^\d+$/.test(v)); // skip blanks and bare-number placeholders (e.g. "3", "7")
+      if (tabs.length === 0) continue;
+      const tabsHtml = tabs.map(label =>
+        `<button class="stretch-tab" onclick="toggleStretchTab(this)">${escapeHtml(label)}</button>`
+      ).join("");
+      html += `<div class="stretch-exercise"><div class="stretch-ex-name">${escapeHtml(exName)}</div><div class="stretch-tabs">${tabsHtml}</div></div>`;
     }
 
     body.innerHTML = html || '<div class="stretch-loading">No exercises found.</div>';
