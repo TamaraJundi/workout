@@ -115,12 +115,15 @@
   .set-cell{color:var(--faint);font-size:11px;font-weight:500;text-align:left;border-right:1px solid var(--border-soft);}
   .dcell .v-reps{font-size:11px;color:var(--muted);font-weight:500;font-variant-numeric:tabular-nums;}
   .dcell .v-x{font-size:10px;color:var(--faint);margin:0 3px;}
-  .dcell .v-kg{font-family:var(--head);font-size:16px;font-weight:700;color:var(--acc);font-variant-numeric:tabular-nums;}
+  .dcell .v-kg{font-family:var(--head);font-size:17px;font-weight:700;color:var(--acc);font-variant-numeric:tabular-nums;}
   .dcell .v-unit{font-family:var(--font);font-size:9px;font-weight:600;color:var(--acc);opacity:.7;margin-left:1px;}
   .dcell.empty{color:var(--faint);opacity:.4;}
-  /* per-exercise-block shading (alternates by block, not row) */
-  tr.blk-a .dcell{background:var(--acc-faint);}
-  tr.blk-b .dcell{background:rgba(255,255,255,0.015);}
+  /* per-exercise-block shading (alternates by block, not row): band background + weight colour */
+  tr.blk-a td.dcell,tr.blk-a td.sticky-ex,tr.blk-a td.sticky-set{background:var(--band-a);}
+  tr.blk-b td.dcell,tr.blk-b td.sticky-ex,tr.blk-b td.sticky-set{background:var(--band-b);}
+  tr.blk-a .v-kg,tr.blk-a .v-unit{color:var(--kg-a);}
+  tr.blk-b .v-kg,tr.blk-b .v-unit{color:var(--kg-b);}
+  tr.block-top td{border-top:2px solid var(--border);}
   .no-data-msg,.loading-msg{font-size:12.5px;color:var(--muted);padding:14px 2px;font-style:italic;}
   .retry-btn{margin-left:8px;font-family:var(--font);font-size:11px;font-weight:600;padding:5px 12px;border-radius:14px;border:1.5px solid var(--acc);background:transparent;color:var(--acc);cursor:pointer;}
 
@@ -145,12 +148,12 @@
   .exercise-block.blk-a{background:var(--acc-soft);}
   .exercise-block.blk-b{background:rgba(255,255,255,0.02);}
   .exercise-name{font-family:var(--head);font-size:14px;font-weight:600;margin-bottom:10px;color:var(--text);}
-  .set-head{display:grid;grid-template-columns:34px 1fr 92px;gap:9px;padding:0 2px 6px;}
+  .set-head{display:grid;grid-template-columns:30px 150px 92px;gap:10px;padding:0 2px 6px;justify-content:start;}
   .set-head span{font-size:9px;font-weight:600;letter-spacing:.08em;color:var(--faint);text-transform:uppercase;}
   .set-head .sh-reps{text-align:center;}
   .set-head .sh-kg{text-align:center;}
   .sets{display:flex;flex-direction:column;gap:8px;}
-  .set-row{display:grid;grid-template-columns:34px 1fr 92px;gap:9px;align-items:center;}
+  .set-row{display:grid;grid-template-columns:30px 150px 92px;gap:10px;align-items:center;justify-content:start;}
   .set-tag{
     font-family:var(--head);font-size:13px;font-weight:600;color:var(--muted);
     width:28px;height:28px;display:flex;align-items:center;justify-content:center;
@@ -159,7 +162,7 @@
   .rep-stepper{display:flex;align-items:center;gap:0;background:var(--surface-2);border:1.5px solid var(--border);border-radius:10px;overflow:hidden;}
   .rep-stepper:focus-within{border-color:var(--acc);}
   .step{
-    flex:0 0 auto;width:40px;height:44px;border:none;background:transparent;
+    flex:0 0 auto;width:38px;height:44px;border:none;background:transparent;
     color:var(--acc);font-size:22px;font-weight:600;cursor:pointer;line-height:1;
     display:flex;align-items:center;justify-content:center;transition:background .12s;user-select:none;
   }
@@ -249,7 +252,6 @@
 
 <div class="header">
   <h1>Workout Tracker</h1>
-  <p>Tap a box to fill last time · steppers for reps</p>
 </div>
 
 <div class="tabs" id="tabs"></div>
@@ -321,6 +323,9 @@ function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
 function hasVal(x){if(x===null||x===undefined)return false;const s=String(x).trim();return s!=='' && !['—','-','–','−','--'].includes(s);}
 function clean(x){const s=String(x).trim().replace(/[^\d.]/g,'');return s;}
 function hexToRgba(hex,a){hex=hex.replace('#','');const n=parseInt(hex,16);return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;}
+function _rgb(hex){hex=hex.replace('#','');const n=parseInt(hex,16);return[(n>>16)&255,(n>>8)&255,n&255];}
+function lighten(hex,f){const c=_rgb(hex);return `rgb(${Math.round(c[0]+(255-c[0])*f)},${Math.round(c[1]+(255-c[1])*f)},${Math.round(c[2]+(255-c[2])*f)})`;}
+function mixOpaque(base,hex,f){const c=_rgb(hex);return `rgb(${Math.round(base[0]+(c[0]-base[0])*f)},${Math.round(base[1]+(c[1]-base[1])*f)},${Math.round(base[2]+(c[2]-base[2])*f)})`;}
 function el(session,ei,si,f){const c=document.getElementById('inputs-'+slug(session));return c?c.querySelector(`[data-ex="${ei}"][data-set="${si}"][data-field="${f}"]`):null;}
 
 /* ---------- sheet discovery ---------- */
@@ -385,9 +390,14 @@ function buildPanels(){
     panel.style.setProperty('--acc',acc);
     panel.style.setProperty('--acc-soft',hexToRgba(acc,0.16));
     panel.style.setProperty('--acc-faint',hexToRgba(acc,0.07));
+    const SURF=[23,31,66];
+    panel.style.setProperty('--band-a',mixOpaque(SURF,acc,0.24)); // tinted band
+    panel.style.setProperty('--band-b','rgb(15,21,52)');          // darker band
+    panel.style.setProperty('--kg-a',lighten(acc,0.34));          // brighter weight
+    panel.style.setProperty('--kg-b',lighten(acc,0.10));          // distinct weight shade
     panel.innerHTML=
       `<div class="session-header"><span class="sh-dot"></span><div><h2>${esc(session)}</h2><div class="sub" id="sub-${slug(session)}">&nbsp;</div></div></div>`+
-      `<div class="past-section"><div class="block-label">Past sessions · newest first</div><div id="past-${slug(session)}"><div class="loading-msg">Loading…</div></div></div>`+
+      `<div class="past-section"><div class="block-label">Past sessions</div><div id="past-${slug(session)}"><div class="loading-msg">Loading…</div></div></div>`+
       `<div class="log-section" id="log-${slug(session)}"><div class="loading-msg">Loading…</div></div>`;
     content.insertBefore(panel,overview);
   });
@@ -435,7 +445,7 @@ function renderPast(session){
   st.exercises.forEach((ex,ei)=>{
     const blk=ei%2?'blk-b':'blk-a';
     ex.setRows.forEach((sr,si)=>{
-      h+=`<tr class="${blk}">`;
+      h+=`<tr class="${blk}${(si===0&&ei>0)?' block-top':''}">`;
       if(si===0) h+=`<td class="ex-cell sticky-ex" rowspan="${ex.setRows.length}">${esc(ex.name)}</td>`;
       h+=`<td class="set-cell sticky-set">${si+1}</td>`;
       cols.forEach(c=>{
@@ -476,7 +486,7 @@ function buildLog(session){
     html+=`</div></div>`;
   });
   html+=`</div>`;
-  html+=`<button class="save-btn" onclick="saveSession('${sEsc}')">Save Session</button><div class="status-msg" id="status-${sg}"></div><div class="draft-flag" id="draft-${sg}"></div>`;
+  html+=`<button class="save-btn" onclick="saveSession('${sEsc}')">Save Session</button><div class="status-msg" id="status-${sg}"></div>`;
   host.innerHTML=html;
 }
 
