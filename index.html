@@ -104,6 +104,8 @@
   .past-table th.sticky-ex,.past-table th.sticky-set{text-align:left;z-index:3;}
   .past-table th.sticky-ex{left:0;}
   .past-table th.sticky-set{left:96px;}
+  .th-num{display:block;}
+  .th-date{display:block;font-size:9px;font-weight:500;color:var(--faint);margin-top:1px;letter-spacing:0;}
   .sticky-ex{position:sticky;left:0;z-index:2;background:var(--surface);min-width:96px;max-width:120px;}
   .sticky-set{position:sticky;left:96px;z-index:2;background:var(--surface);}
   .past-table td{padding:7px 12px;border-bottom:1px solid var(--border-soft);white-space:nowrap;text-align:center;}
@@ -143,6 +145,15 @@
     text-align:center;font-variant-numeric:tabular-nums;
   }
   .session-num-input:focus{outline:none;border-color:var(--acc);}
+  .log-meta{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .meta-field{display:flex;align-items:center;gap:8px;}
+  .meta-field label{font-size:11px;color:var(--muted);font-weight:500;}
+  .date-input{
+    font-family:var(--font);font-size:13px;font-weight:500;padding:7px 9px;
+    border:1.5px solid var(--border);border-radius:9px;background:var(--surface-2);color:var(--text);
+    color-scheme:dark;
+  }
+  .date-input:focus{outline:none;border-color:var(--acc);}
 
   .exercise-block{border-radius:12px;padding:12px 13px;margin-bottom:11px;border:1px solid var(--border-soft);}
   .exercise-block.blk-a{background:var(--acc-soft);}
@@ -328,44 +339,63 @@ function lighten(hex,f){const c=_rgb(hex);return `rgb(${Math.round(c[0]+(255-c[0
 function mixOpaque(base,hex,f){const c=_rgb(hex);return `rgb(${Math.round(base[0]+(c[0]-base[0])*f)},${Math.round(base[1]+(c[1]-base[1])*f)},${Math.round(base[2]+(c[2]-base[2])*f)})`;}
 function el(session,ei,si,f){const c=document.getElementById('inputs-'+slug(session));return c?c.querySelector(`[data-ex="${ei}"][data-set="${si}"][data-field="${f}"]`):null;}
 
-/* ---------- sheet discovery ---------- */
-// An exercise HEADER row = column A has a name AND column B === "REPS".
-// Its SET rows = the following rows whose column A starts with "Set".
-function discover(data){
-  const exercises=[];
+/* ---------- sheet discovery (transposed, column-driven format) ----------
+   Row 2 (data[1]) holds EXERCISE NAMES, merged over each REPS/KG pair, from column D (index 3).
+     -> add a REPS/KG column pair with a name = new exercise; rename the header = switch exercise.
+   Each SESSION is a block: a header row with the session # in column A and the date in column B,
+   followed by the "Set 1/2/3" rows (label in column C). */
+function discoverExercises(data){
+  const names=data[1]||[];const ex=[];
+  for(let c=3;c<names.length;c+=2){
+    const nm=String(names[c]==null?'':names[c]).trim();
+    if(nm) ex.push({name:nm,repsCol:c,kgCol:c+1});
+  }
+  return ex;
+}
+function discoverSessions(data){
+  const out=[];let cur=null;
   for(let r=2;r<data.length;r++){
     const row=data[r]||[];
     const a=String(row[0]==null?'':row[0]).trim();
-    const b=String(row[1]==null?'':row[1]).trim().toUpperCase();
-    if(a && b==='REPS'){
-      const ex={name:a,headerRow:r,setRows:[]};
-      let rr=r+1;
-      while(rr<data.length && /^set\b/i.test(String((data[rr]||[])[0]==null?'':(data[rr]||[])[0]).trim())){
-        ex.setRows.push(rr); rr++;
-      }
-      if(ex.setRows.length) exercises.push(ex);
-    }
-  }
-  return exercises;
-}
-function discoverSessions(data,exercises){
-  const width=data.reduce((m,r)=>Math.max(m,(r||[]).length),0);
-  const out=[];
-  for(let c=1;c<width;c+=2){
-    let num=parseInt(String((data[1]||[])[c]==null?'':(data[1]||[])[c]).trim(),10);
-    if(isNaN(num)) num=(c-1)/2+1;
-    let filled=false;
-    for(const ex of exercises){for(const sr of ex.setRows){const row=data[sr]||[];if(hasVal(row[c])||hasVal(row[c+1])){filled=true;break;}}if(filled)break;}
-    out.push({c,num,filled});
+    const c=String(row[2]==null?'':row[2]).trim();
+    const n=parseInt(a,10);
+    if(a!=='' && !isNaN(n) && String(n)===a){ cur={num:n,date:row[1],headerRow:r,setRows:[],filled:false}; out.push(cur); }
+    else if(cur && /^set\b/i.test(c)){ cur.setRows.push(r); }
   }
   return out;
 }
-function nextSessionNum(session){let mx=0;(STATE[session].sessions||[]).forEach(s=>{if(s.filled&&s.num>mx)mx=s.num;});return mx+1;}
+function sessFilled(data,exercises,sess){
+  for(const e of exercises){for(const sr of sess.setRows){const row=data[sr]||[];if(hasVal(row[e.repsCol])||hasVal(row[e.kgCol]))return true;}}
+  return false;
+}
+function setCountOf(sessions){let m=0;sessions.forEach(s=>{if(s.setRows.length>m)m=s.setRows.length;});return m||3;}
+function nextSessionNum(session){
+  const sess=STATE[session].sessions||[];
+  const empties=sess.filter(s=>!s.filled).map(s=>s.num).sort((a,b)=>a-b);
+  if(empties.length) return empties[0];
+  let mx=0;sess.forEach(s=>{if(s.num>mx)mx=s.num;});
+  return mx+1;
+}
 function filledDesc(session){return (STATE[session].sessions||[]).filter(s=>s.filled).sort((a,b)=>b.num-a.num);}
 function lastValue(session,ei,si){
-  const st=STATE[session];const ex=st.exercises[ei];const sr=ex.setRows[si];
-  for(const s of filledDesc(session)){const row=st.data[sr]||[];if(hasVal(row[s.c])||hasVal(row[s.c+1])){return{reps:hasVal(row[s.c])?clean(row[s.c]):'',kg:hasVal(row[s.c+1])?clean(row[s.c+1]):''};}}
+  const st=STATE[session];const ex=st.exercises[ei];
+  for(const s of filledDesc(session)){
+    const sr=s.setRows[si];if(sr==null)continue;
+    const row=st.data[sr]||[];
+    if(hasVal(row[ex.repsCol])||hasVal(row[ex.kgCol]))
+      return{reps:hasVal(row[ex.repsCol])?clean(row[ex.repsCol]):'',kg:hasVal(row[ex.kgCol])?clean(row[ex.kgCol]):''};
+  }
   return{reps:'',kg:''};
+}
+/* date helpers */
+function pad2(n){return String(n).padStart(2,'0');}
+function todayISO(){const d=new Date();return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());}
+function inputToDDMM(v){const p=String(v).split('-');return p.length===3?p[2]+'/'+p[1]:String(v);}
+function fmtDate(v){
+  if(v==null||v==='')return '';
+  const s=String(v);
+  if(/^\d{4}-\d{2}-\d{2}T/.test(s)){const d=new Date(s);if(!isNaN(d))return pad2(d.getDate())+'/'+pad2(d.getMonth()+1);}
+  return s;
 }
 
 /* ---------- build UI ---------- */
@@ -419,9 +449,10 @@ async function loadSession(session){
     const res=await fetch(SCRIPT_URL+'?session='+encodeURIComponent(session));
     const json=await res.json();
     const data=json.data||[];
-    const exercises=discover(data);
-    const sessions=discoverSessions(data,exercises);
-    STATE[session]={data,exercises,sessions};
+    const exercises=discoverExercises(data);
+    const sessions=discoverSessions(data);
+    sessions.forEach(s=>s.filled=sessFilled(data,exercises,s));
+    STATE[session]={data,exercises,sessions,setCount:setCountOf(sessions)};
     loaded[session]=true;
     renderPast(session);
     buildLog(session);
@@ -429,6 +460,7 @@ async function loadSession(session){
     const sub=document.getElementById('sub-'+slug(session));
     if(sub) sub.textContent=exercises.length? `${exercises.length} exercise${exercises.length>1?'s':''} · ${filledDesc(session).length} logged`:'\u00A0';
     if(!restoreDraft(session)){const sn=document.getElementById('snum-'+slug(session));if(sn) sn.value=nextSessionNum(session);}
+    const sd=document.getElementById('sdate-'+slug(session));if(sd&&!sd.value) sd.value=todayISO();
   }catch(e){
     past.innerHTML='<div class="no-data-msg">Could not load — check your connection.</div>';
     document.getElementById('log-'+slug(session)).innerHTML='<div class="no-data-msg">Couldn\u2019t load exercises.<button class="retry-btn" onclick="loadSession(\''+session.replace(/'/g,"\\'")+'\')">Retry</button></div>';
@@ -437,19 +469,19 @@ async function loadSession(session){
 
 function renderPast(session){
   const st=STATE[session];const host=document.getElementById('past-'+slug(session));
-  const cols=filledDesc(session);
+  const cols=filledDesc(session);const sc=st.setCount;
   if(!st.exercises.length||cols.length===0){host.innerHTML='<div class="no-data-msg">No sessions logged yet.</div>';return;}
   let h='<div class="past-scroll"><table class="past-table"><thead><tr><th class="sticky-ex">Exercise</th><th class="sticky-set">Set</th>';
-  cols.forEach(c=>h+=`<th>#${c.num}</th>`);
+  cols.forEach(c=>{const d=fmtDate(c.date);h+=`<th><span class="th-num">#${c.num}</span>${d?`<span class="th-date">${esc(d)}</span>`:''}</th>`;});
   h+='</tr></thead><tbody>';
   st.exercises.forEach((ex,ei)=>{
     const blk=ei%2?'blk-b':'blk-a';
-    ex.setRows.forEach((sr,si)=>{
+    for(let si=0;si<sc;si++){
       h+=`<tr class="${blk}${(si===0&&ei>0)?' block-top':''}">`;
-      if(si===0) h+=`<td class="ex-cell sticky-ex" rowspan="${ex.setRows.length}">${esc(ex.name)}</td>`;
+      if(si===0) h+=`<td class="ex-cell sticky-ex" rowspan="${sc}">${esc(ex.name)}</td>`;
       h+=`<td class="set-cell sticky-set">${si+1}</td>`;
       cols.forEach(c=>{
-        const row=st.data[sr]||[];const r=row[c.c],k=row[c.c+1];
+        const sr=c.setRows[si];const row=(sr!=null?st.data[sr]:null)||[];const r=row[ex.repsCol],k=row[ex.kgCol];
         if(hasVal(r)||hasVal(k)){
           h+=`<td class="dcell"><span class="v-reps">${hasVal(r)?esc(clean(r)||String(r).trim()):'–'}</span><span class="v-x">×</span><span class="v-kg">${hasVal(k)?esc(clean(k)||String(k).trim()):''}${hasVal(k)?'<span class="v-unit">kg</span>':''}</span></td>`;
         }else{
@@ -457,7 +489,7 @@ function renderPast(session){
         }
       });
       h+='</tr>';
-    });
+    }
   });
   h+='</tbody></table></div>';
   host.innerHTML=h;
@@ -467,13 +499,17 @@ function buildLog(session){
   const st=STATE[session];const host=document.getElementById('log-'+slug(session));const sg=slug(session);
   const sEsc=session.replace(/'/g,"\\'");
   if(!st.exercises.length){host.innerHTML='<div class="no-data-msg">No exercises found in the sheet for this tab.</div>';return;}
+  const sc=st.setCount;
   let html=`<div class="log-header"><span class="log-label">Log new session</span>`+
-    `<div class="session-num-wrap"><label>Session</label><input id="snum-${sg}" class="session-num-input" type="number" min="1" inputmode="numeric" oninput="saveDraft('${sEsc}')"></div></div>`;
+    `<div class="log-meta">`+
+      `<div class="meta-field"><label>Session</label><input id="snum-${sg}" class="session-num-input" type="number" min="1" inputmode="numeric" oninput="saveDraft('${sEsc}')"></div>`+
+      `<div class="meta-field"><label>Date</label><input id="sdate-${sg}" class="date-input" type="date" oninput="saveDraft('${sEsc}')"></div>`+
+    `</div></div>`;
   html+=`<div id="inputs-${sg}">`;
   st.exercises.forEach((ex,ei)=>{
     html+=`<div class="exercise-block ${ei%2?'blk-b':'blk-a'}"><div class="exercise-name">${esc(ex.name)}</div>`+
       `<div class="set-head"><span class="sh-set">SET</span><span class="sh-reps">REPS</span><span class="sh-kg">KG</span></div><div class="sets">`;
-    ex.setRows.forEach((sr,si)=>{
+    for(let si=0;si<sc;si++){
       html+=`<div class="set-row"><span class="set-tag">${si+1}</span>`+
         `<div class="rep-stepper">`+
           `<button type="button" class="step" onclick="stepReps('${sEsc}',${ei},${si},-1)">−</button>`+
@@ -482,7 +518,7 @@ function buildLog(session){
         `</div>`+
         `<input class="cell-input kg" inputmode="decimal" data-ex="${ei}" data-set="${si}" data-field="kg" placeholder="—" onfocus="fillLast(this)" oninput="saveDraft('${sEsc}')">`+
       `</div>`;
-    });
+    }
     html+=`</div></div>`;
   });
   html+=`</div>`;
@@ -491,16 +527,16 @@ function buildLog(session){
 }
 
 function applyPlaceholders(session){
-  const st=STATE[session];
+  const st=STATE[session];const sc=st.setCount;
   st.exercises.forEach((ex,ei)=>{
-    ex.setRows.forEach((sr,si)=>{
+    for(let si=0;si<sc;si++){
       const lv=lastValue(session,ei,si);
       ['reps','kg'].forEach(f=>{
         const inp=el(session,ei,si,f);if(!inp)return;
         inp.dataset.last=lv[f]||'';
         if(lv[f]) inp.placeholder=lv[f];
       });
-    });
+    }
   });
 }
 
@@ -527,7 +563,8 @@ function saveDraft(session){
   const vals={};
   cont.querySelectorAll('.cell-input').forEach(inp=>{if(inp.value!=='')vals[`${inp.dataset.ex}_${inp.dataset.set}_${inp.dataset.field}`]=inp.value;});
   const sn=document.getElementById('snum-'+slug(session));
-  const obj={n:sn?sn.value:'',vals,t:Date.now()};
+  const sd=document.getElementById('sdate-'+slug(session));
+  const obj={n:sn?sn.value:'',d:sd?sd.value:'',vals,t:Date.now()};
   try{localStorage.setItem(dkey(session),JSON.stringify(obj));}catch(e){}
   updateDraftFlag(session);
 }
@@ -537,6 +574,7 @@ function restoreDraft(session){
   const cont=document.getElementById('inputs-'+slug(session));
   if(cont){Object.entries(obj.vals).forEach(([k,v])=>{const[e,s,f]=k.split('_');const inp=cont.querySelector(`[data-ex="${e}"][data-set="${s}"][data-field="${f}"]`);if(inp)inp.value=v;});}
   const sn=document.getElementById('snum-'+slug(session));if(sn&&obj.n)sn.value=obj.n;
+  const sd=document.getElementById('sdate-'+slug(session));if(sd&&obj.d)sd.value=obj.d;
   updateDraftFlag(session);
   return true;
 }
@@ -555,12 +593,15 @@ async function saveSession(session){
   const snEl=document.getElementById('snum-'+sg);
   const sessionNumber=parseInt(snEl.value,10);
   if(!sessionNumber||sessionNumber<1){status.textContent='Enter a session number first.';status.className='status-msg error';return;}
-  const exercises=st.exercises.map((ex,ei)=>({exercise:ex.name,sets:ex.setRows.map((sr,si)=>({reps:(el(session,ei,si,'reps').value||''),kg:(el(session,ei,si,'kg').value||'')}))}));
+  const dateEl=document.getElementById('sdate-'+sg);
+  const date=dateEl&&dateEl.value?inputToDDMM(dateEl.value):'';
+  const sc=st.setCount;
+  const exercises=st.exercises.map((ex,ei)=>({exercise:ex.name,sets:Array.from({length:sc},(_,si)=>({reps:(el(session,ei,si,'reps').value||''),kg:(el(session,ei,si,'kg').value||'')}))}));
   const anyData=exercises.some(e=>e.sets.some(s=>s.reps!==''||s.kg!==''));
   if(!anyData){status.textContent='Nothing entered yet.';status.className='status-msg error';return;}
   btn.disabled=true;btn.textContent='Saving…';status.textContent='';status.className='status-msg';
   try{
-    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({session,sessionNumber,exercises})});
+    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({session,sessionNumber,date,exercises})});
     status.textContent=`Session ${sessionNumber} saved ✓`;status.className='status-msg success';
     btn.textContent='Saved ✓';
     clearDraft(session);
@@ -580,7 +621,7 @@ async function loadOverview(){
     const acc=ACCENTS[w];const st=STATE[w];
     h+=`<div class="ov-card" style="--ovc:${acc};--ovc-soft:${hexToRgba(acc,0.16)}"><div class="ov-head"><span class="dot"></span><h3>${esc(w)}</h3><span class="cnt">${st&&st.exercises?st.exercises.length+' exercises':''}</span></div>`;
     if(st&&st.exercises&&st.exercises.length){
-      st.exercises.forEach(ex=>{h+=`<div class="ov-row"><span class="ov-name">${esc(ex.name)}</span><span class="ov-scheme">${ex.setRows.length} set${ex.setRows.length>1?'s':''}</span></div>`;});
+      st.exercises.forEach(ex=>{h+=`<div class="ov-row"><span class="ov-name">${esc(ex.name)}</span><span class="ov-scheme">${st.setCount} set${st.setCount>1?'s':''}</span></div>`;});
     }else{h+='<div class="ov-loading">Could not load.</div>';}
     h+='</div>';
   });
@@ -590,8 +631,9 @@ async function loadSessionQuiet(session){
   try{
     const res=await fetch(SCRIPT_URL+'?session='+encodeURIComponent(session));
     const json=await res.json();const data=json.data||[];
-    const exercises=discover(data);const sessions=discoverSessions(data,exercises);
-    STATE[session]={data,exercises,sessions};loaded[session]=true;
+    const exercises=discoverExercises(data);const sessions=discoverSessions(data);
+    sessions.forEach(s=>s.filled=sessFilled(data,exercises,s));
+    STATE[session]={data,exercises,sessions,setCount:setCountOf(sessions)};loaded[session]=true;
   }catch(e){}
 }
 
