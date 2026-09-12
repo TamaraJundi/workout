@@ -107,6 +107,7 @@
   .add-header{background:linear-gradient(120deg,var(--acc-soft),transparent);padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;}
   .add-header .dot{width:9px;height:9px;border-radius:50%;background:var(--acc);box-shadow:0 0 10px var(--acc);}
   .add-header h3{font-family:var(--head);font-size:15px;font-weight:600;color:var(--text);}
+  .ver-badge{margin-left:auto;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--acc);border:1px solid var(--acc);border-radius:10px;padding:2px 8px;}
   .add-body{padding:14px 16px;}
 
   /* MEAL CHIPS */
@@ -278,7 +279,7 @@
   </div>
 
   <div class="add-section">
-    <div class="add-header"><span class="dot"></span><h3>Log Food</h3></div>
+    <div class="add-header"><span class="dot"></span><h3>Log Food</h3><span class="ver-badge">build v3</span></div>
     <div class="add-body">
       <div class="meal-chips">
         <button class="meal-chip active" onclick="selectMeal(this,'Breakfast')">Breakfast</button>
@@ -386,7 +387,7 @@
     </div>
   </div>
 
-  <div style="text-align:center;color:var(--faint);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:20px 0 6px;">Accurate-macros build · v2</div>
+  <div style="text-align:center;color:var(--faint);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:20px 0 6px;">Accurate-macros build · v3</div>
 
 </div>
 
@@ -536,7 +537,7 @@ function liveSearch(query) {
 }
 
 function selectIngredient(ing) {
-  selectedFood = { name: ing.name, per: ing.per || "100g", per100: { cal: +ing.calories, pro: +ing.protein, carb: +ing.carbs, fat: +ing.fat, fib: +ing.fiber } };
+  selectedFood = { name: ing.name, per: ing.per || "100g", calories: +ing.calories, protein: +ing.protein, carbs: +ing.carbs, fat: +ing.fat, fiber: +ing.fiber };
   isManual = false;
   document.getElementById("search-results").style.display = "none";
   document.getElementById("food-search").value = "";
@@ -588,9 +589,8 @@ function toggleManual() {
 function updatePreview() {
   if (!selectedFood) return;
   const amt = parseFloat(document.getElementById("food-amount").value) || 0;
-  const ratio = amt / perQty(selectedFood.per);
-  const p = selectedFood.per100;
-  setPrev(Math.round(p.cal*ratio), +(p.pro*ratio).toFixed(1), +(p.carb*ratio).toFixed(1), +(p.fat*ratio).toFixed(1), +(p.fib*ratio).toFixed(1));
+  const m = scaleMacros(selectedFood, amt);
+  setPrev(m.calories, m.protein, m.carbs, m.fat, m.fiber);
 }
 function updateManualPreview() {
   setPrev(document.getElementById("man-cal").value||"—", document.getElementById("man-pro").value||"—", document.getElementById("man-carb").value||"—", document.getElementById("man-fat").value||"—", document.getElementById("man-fib").value||"—");
@@ -621,9 +621,8 @@ async function addFood() {
     fat = parseFloat(document.getElementById("man-fat").value)||0;
     fib = parseFloat(document.getElementById("man-fib").value)||0;
   } else if (selectedFood) {
-    const ratio = amt / perQty(selectedFood.per);
-    const p = selectedFood.per100;
-    cal = Math.round(p.cal*ratio); pro = +(p.pro*ratio).toFixed(1); carb = +(p.carb*ratio).toFixed(1); fat = +(p.fat*ratio).toFixed(1); fib = +(p.fib*ratio).toFixed(1);
+    const m = scaleMacros(selectedFood, amt);
+    cal = m.calories; pro = m.protein; carb = m.carbs; fat = m.fat; fib = m.fiber;
   } else { statusEl.textContent = "Please select a food first."; statusEl.className = "status-msg error"; return; }
   btn.disabled = true; btn.textContent = "Adding…"; statusEl.textContent = "";
   const row = { date: currentDate, meal: selectedMeal, food: foodName, amount: amt, unit, calories: cal, protein: pro, carbs: carb, fat, fiber: fib };
@@ -746,22 +745,26 @@ async function addIngredient() {
   btn.disabled = false; btn.textContent = "Add Ingredient";
 }
 
-// ── MEALS ─────────────────────────────────────────────────────────────────────
-function perToUnit(per){ per = String(per||"100g").toLowerCase(); if (per.includes("ml")) return "ml"; if (per === "serving") return "serving"; return "g"; }
-function perUnit(per){ return perToUnit(per); }
-// The numeric quantity the sheet macros are stated for: "serving"->1, "250ml"->250, "15ml"->15, "100g"->100, "20g"->20.
-function perQty(per){ per = String(per||"").trim().toLowerCase(); if (per === "serving" || per === "") return 1; const n = parseFloat(per); return (!isFinite(n) || n <= 0) ? 1 : n; }
-function findIng(name){ const n = String(name).toLowerCase().trim(); return ingredients.find(i => i.name.toLowerCase().trim() === n); }
-function macrosFor(ing, amt){
-  const ratio = amt / perQty(ing.per);
+// ── MACRO MATH — single source of truth for the whole app ─────────────────────
+// Every food's macros in the Ingredients sheet are stated for the quantity in its
+// "Per" column. Macros for `amount` (in that same base unit) = sheetMacros × amount / perQty.
+//   perQty: "serving"→1 · "100g"→100 · "250ml"→250 · "15ml"→15 · "20g"→20
+function perQty(per){ const s = String(per==null?"":per).trim().toLowerCase(); if (s === "" || s === "serving") return 1; const n = parseFloat(s); return (isFinite(n) && n > 0) ? n : 1; }
+function perUnit(per){ const s = String(per==null?"":per).trim().toLowerCase(); if (s === "serving") return "serving"; if (s.indexOf("ml") !== -1) return "ml"; return "g"; }
+function perToUnit(per){ return perUnit(per); }
+function r1(x){ return Math.round(x*10)/10; }
+function scaleMacros(ing, amount){
+  const ratio = (parseFloat(amount)||0) / perQty(ing.per);
   return {
     calories: Math.round((+ing.calories||0)*ratio),
-    protein: +((+ing.protein||0)*ratio).toFixed(1),
-    carbs:   +((+ing.carbs||0)*ratio).toFixed(1),
-    fat:     +((+ing.fat||0)*ratio).toFixed(1),
-    fiber:   +((+ing.fiber||0)*ratio).toFixed(1)
+    protein:  r1((+ing.protein||0)*ratio),
+    carbs:    r1((+ing.carbs||0)*ratio),
+    fat:      r1((+ing.fat||0)*ratio),
+    fiber:    r1((+ing.fiber||0)*ratio)
   };
 }
+function macrosFor(ing, amt){ return scaleMacros(ing, amt); }
+function findIng(name){ const n = String(name).toLowerCase().trim(); return ingredients.find(i => i.name.toLowerCase().trim() === n); }
 function mealKcal(m){ let c = 0; m.ingredients.forEach(x => { const ing = findIng(x.ingredient); if (ing) c += macrosFor(ing, +x.amount||0).calories; }); return Math.round(c); }
 
 async function loadMeals(){
