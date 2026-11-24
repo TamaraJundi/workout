@@ -284,11 +284,6 @@
 
   <!-- STRETCH (static shell) -->
   <div class="session-panel" id="panel-Stretch">
-    <div class="session-header" style="--acc:var(--cyan);--acc-soft:rgba(0,180,216,.16);border-radius:var(--radius) var(--radius) 0 0;">
-      <span class="sh-dot"></span>
-      <div><h2>Stretch &amp; Mobility</h2><div class="sub">Tap a box to mark it done</div></div>
-    </div>
-    <div id="stretch-body"><div class="loading-msg" style="background:var(--surface);border:1px solid var(--border);border-top:none;padding:18px 16px;">Loading…</div></div>
     <div class="timer-card">
       <div class="timer-label">Rest Timer</div>
       <div class="timer-presets">
@@ -307,6 +302,11 @@
         <div class="timer-display" id="timer-display">0:30</div>
       </div>
     </div>
+    <div class="session-header" style="--acc:var(--cyan);--acc-soft:rgba(0,180,216,.16);border-radius:var(--radius) var(--radius) 0 0;margin-top:14px;">
+      <span class="sh-dot"></span>
+      <div><h2>Stretch &amp; Mobility</h2><div class="sub">Tap a box to mark it done</div></div>
+    </div>
+    <div id="stretch-body"><div class="loading-msg" style="background:var(--surface);border:1px solid var(--border);border-top:none;padding:18px 16px;">Loading…</div></div>
   </div>
 </div>
 
@@ -644,16 +644,21 @@ async function loadStretch(){
     const res=await fetch(SCRIPT_URL+'?session=Stretch');
     const json=await res.json();const data=json.data||[];
     if(!data||data.length<2){body.innerHTML=wrapStretch('<div class="loading-msg" style="padding:18px 16px;">No exercises found.</div>');return;}
-    const headers=data[0]||[];const labels=headers.slice(1).filter(x=>x!=='');
-    let rows='';let idx=0;const total=data.slice(1).filter(r=>String((r||[])[0]||'').trim()).length;
-    for(let r=1;r<data.length;r++){
-      const row=data[r]||[];const name=String(row[0]||'').trim();if(!name)continue;
-      const cells=row.slice(1,1+Math.max(labels.length,1));
-      const tabs=cells.map((v,i)=>`<button class="stretch-tab" onclick="this.classList.toggle('done')">${esc(v||labels[i]||('Set '+(i+1)))}</button>`).join('');
-      const cls=(idx===0?'first ':'')+(idx===total-1?'last':'');
-      rows+=`<div class="stretch-ex ${cls}"><div class="stretch-ex-name">${esc(name)}</div><div class="stretch-tabs">${tabs}</div></div>`;
-      idx++;
-    }
+    // exercise rows = any row (below the header) with a name in column A
+    const exRows=[];
+    for(let r=1;r<data.length;r++){ if(String((data[r]||[])[0]||'').trim()) exRows.push(r); }
+    let rows='';
+    exRows.forEach((r,idx)=>{
+      const row=data[r]||[];const name=String(row[0]||'').trim();
+      // one chip per FILLED cell only (so empty columns don't show phantom 1-7)
+      let chips='';
+      for(let c=1;c<row.length;c++){
+        const v=String(row[c]==null?'':row[c]).trim();
+        if(v!=='') chips+=`<button class="stretch-tab" onclick="this.classList.toggle('done')">${esc(v)}</button>`;
+      }
+      const cls=(idx===0?'first ':'')+(idx===exRows.length-1?'last':'');
+      rows+=`<div class="stretch-ex ${cls}"><div class="stretch-ex-name">${esc(name)}</div><div class="stretch-tabs">${chips}</div></div>`;
+    });
     body.innerHTML=rows||wrapStretch('<div class="loading-msg" style="padding:18px 16px;">No exercises found.</div>');
   }catch(e){body.innerHTML='<div class="loading-msg" style="background:var(--surface);border:1px solid var(--border);border-top:none;padding:18px 16px;">Could not load.</div>';}
 }
@@ -661,6 +666,12 @@ function wrapStretch(inner){return '<div style="background:var(--surface);border
 
 /* ---------- timer ---------- */
 let timerTotal=30,timerLeft=30,timerInt=null;const CIRC=314;
+// Screen Wake Lock — keeps the phone awake while the timer is running.
+let wakeLock=null;
+async function acquireWake(){ try{ if('wakeLock' in navigator){ wakeLock=await navigator.wakeLock.request('screen'); } }catch(e){} }
+async function releaseWake(){ try{ if(wakeLock){ await wakeLock.release(); wakeLock=null; } }catch(e){} }
+// Re-acquire if the screen was off/app backgrounded and comes back while the timer is still running.
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible' && timerInt) acquireWake(); });
 function fmt(s){const m=Math.floor(s/60);return m+':'+String(s%60).padStart(2,'0');}
 function timerUpdate(){
   const pct=timerTotal?timerLeft/timerTotal:0;
@@ -671,13 +682,14 @@ function timerUpdate(){
 }
 function timerStart(){
   const btn=document.getElementById('timer-start-btn');
-  if(timerInt){clearInterval(timerInt);timerInt=null;btn.textContent='Start';return;}
+  if(timerInt){clearInterval(timerInt);timerInt=null;btn.textContent='Start';releaseWake();return;}
   if(timerLeft<=0)timerLeft=timerTotal;
   btn.textContent='Pause';
-  timerInt=setInterval(()=>{timerLeft--;timerUpdate();if(timerLeft<=0){clearInterval(timerInt);timerInt=null;btn.textContent='Start';try{navigator.vibrate&&navigator.vibrate(200);}catch(e){}}},1000);
+  acquireWake();
+  timerInt=setInterval(()=>{timerLeft--;timerUpdate();if(timerLeft<=0){clearInterval(timerInt);timerInt=null;btn.textContent='Start';releaseWake();try{navigator.vibrate&&navigator.vibrate(200);}catch(e){}}},1000);
 }
-function timerReset(){clearInterval(timerInt);timerInt=null;timerLeft=timerTotal;document.getElementById('timer-start-btn').textContent='Start';timerUpdate();}
-function timerPreset(sec){timerTotal=sec;timerLeft=sec;document.querySelectorAll('.preset').forEach(p=>p.classList.toggle('active',+p.dataset.sec===sec));clearInterval(timerInt);timerInt=null;document.getElementById('timer-start-btn').textContent='Start';timerUpdate();}
+function timerReset(){clearInterval(timerInt);timerInt=null;timerLeft=timerTotal;document.getElementById('timer-start-btn').textContent='Start';releaseWake();timerUpdate();}
+function timerPreset(sec){timerTotal=sec;timerLeft=sec;document.querySelectorAll('.preset').forEach(p=>p.classList.toggle('active',+p.dataset.sec===sec));clearInterval(timerInt);timerInt=null;releaseWake();document.getElementById('timer-start-btn').textContent='Start';timerUpdate();}
 
 /* ---------- init ---------- */
 document.addEventListener('DOMContentLoaded',()=>{
