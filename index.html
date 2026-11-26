@@ -251,6 +251,35 @@
   .preset{font-family:var(--font);font-size:11px;font-weight:600;padding:6px 13px;border-radius:16px;border:1.5px solid var(--border);background:var(--surface-2);color:var(--muted);cursor:pointer;}
   .preset.active{border-color:var(--cyan);color:var(--cyan);}
 
+  /* DAILY LOG */
+  .dl-mark{background:var(--surface);border:1px solid var(--border);border-top:none;padding:16px;}
+  .dl-date-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .dl-date-row label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);}
+  .dl-date-input{font-family:var(--head);font-size:15px;font-weight:600;padding:8px 10px;border:1.5px solid var(--border);border-radius:9px;background:var(--surface-2);color:var(--text);color-scheme:dark;}
+  .dl-date-input:focus{outline:none;border-color:var(--acc);}
+  .dl-today-btn{font-family:var(--font);font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:7px 13px;border:1.5px solid var(--border);border-radius:16px;background:transparent;color:var(--muted);cursor:pointer;}
+  .dl-today-btn:hover{border-color:var(--acc);color:var(--acc);}
+  .dl-pills{display:flex;gap:8px;flex-wrap:wrap;}
+  .dl-pill{font-family:var(--font);font-size:13px;font-weight:600;padding:10px 16px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface-2);color:var(--muted);cursor:pointer;transition:.15s;display:flex;align-items:center;gap:7px;}
+  .dl-pill:hover{color:var(--text);}
+  .dl-pill .tick{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--faint);display:inline-flex;align-items:center;justify-content:center;font-size:10px;line-height:1;}
+  .dl-pill.on{background:var(--acc);border-color:var(--acc);color:#04160f;}
+  .dl-pill.on .tick{border-color:#04160f;background:#04160f;color:var(--acc);}
+
+  .dl-cal-wrap{background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);padding:16px;}
+  .dl-month{margin-bottom:18px;}
+  .dl-month:last-child{margin-bottom:0;}
+  .dl-month-label{font-family:var(--head);font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px;}
+  .dl-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+  .dl-wd{text-align:center;font-size:10px;font-weight:600;color:var(--faint);padding-bottom:2px;}
+  .dl-cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--muted);background:var(--surface-2);border:1px solid transparent;}
+  .dl-cell.empty{background:transparent;}
+  .dl-cell.none{background:var(--surface-2);color:var(--faint);}
+  .dl-cell.partial{background:var(--acc-soft);color:var(--acc);}
+  .dl-cell.full{background:var(--acc);color:#04160f;box-shadow:0 0 10px -2px var(--acc);}
+  .dl-cell.future{opacity:.35;}
+  .dl-cell.today{border-color:var(--text);}
+
   @media (max-width:460px){
     .header{padding:22px 14px 0;} .tabs{padding:8px 14px 10px;} .content{padding:0 14px;}
     .session-header h2{font-size:18px;}
@@ -308,6 +337,26 @@
     </div>
     <div id="stretch-body"><div class="loading-msg" style="background:var(--surface);border:1px solid var(--border);border-top:none;padding:18px 16px;">Loading…</div></div>
   </div>
+
+  <!-- DAILY LOG -->
+  <div class="session-panel" id="panel-Daily-Log" data-session="Daily Log" style="--acc:var(--teal);--acc-soft:rgba(42,157,143,.16);--acc-faint:rgba(42,157,143,.08);">
+    <div class="session-header" style="border-radius:var(--radius) var(--radius) 0 0;">
+      <span class="sh-dot"></span>
+      <div><h2>Daily Log</h2><div class="sub">Tap a habit to mark it · a full day fills in</div></div>
+    </div>
+    <div class="dl-mark">
+      <div class="dl-date-row">
+        <label>Day</label>
+        <input type="date" id="dl-date" class="dl-date-input" onchange="onDLDate()">
+        <button class="dl-today-btn" onclick="dlToday()">Today</button>
+      </div>
+      <div class="dl-pills" id="dl-pills"><div class="loading-msg">Loading…</div></div>
+    </div>
+    <div class="dl-cal-wrap">
+      <div class="block-label" style="padding:0 0 10px;">Last 6 weeks</div>
+      <div id="dl-cal"></div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -321,12 +370,16 @@ const ACCENTS = {
   "Upper 1":"#4895EF",  // blue
   "Upper 2":"#B5179E",  // magenta
   "Overview":"#4CC9F0", // sky
-  "Stretch":"#00B4D8"   // cyan
+  "Stretch":"#00B4D8",  // cyan
+  "Daily Log":"#2A9D8F" // teal
 };
 
 const STATE = {};        // session -> {data, exercises, sessions}
 const loaded = {};       // session -> true once fetched
 let stretchLoaded = false;
+let dlCats = [];         // category names from the Daily Log sheet header
+let dlRows = {};         // "dd/mm/yyyy" -> [1/0 per category]
+let dlDate = "";         // selected day "dd/mm/yyyy"
 
 /* ---------- helpers ---------- */
 function slug(s){return s.replace(/[^a-zA-Z0-9]+/g,'-');}
@@ -401,7 +454,7 @@ function fmtDate(v){
 /* ---------- build UI ---------- */
 function buildTabs(){
   const tabs=document.getElementById('tabs');
-  const order=[...WORKOUTS,"Overview","Stretch"];
+  const order=[...WORKOUTS,"Overview","Stretch","Daily Log"];
   order.forEach(name=>{
     const b=document.createElement('button');
     b.className='tab';b.dataset.session=name;b.textContent=name;
@@ -439,6 +492,7 @@ function switchTab(session){
   try{localStorage.setItem('wt-tab',session);}catch(e){}
   if(session==='Stretch'){if(!stretchLoaded){stretchLoaded=true;loadStretch();}return;}
   if(session==='Overview'){loadOverview();return;}
+  if(session==='Daily Log'){loadDailyLog();return;}
   if(!loaded[session]) loadSession(session);
 }
 
@@ -691,12 +745,98 @@ function timerStart(){
 function timerReset(){clearInterval(timerInt);timerInt=null;timerLeft=timerTotal;document.getElementById('timer-start-btn').textContent='Start';releaseWake();timerUpdate();}
 function timerPreset(sec){timerTotal=sec;timerLeft=sec;document.querySelectorAll('.preset').forEach(p=>p.classList.toggle('active',+p.dataset.sec===sec));clearInterval(timerInt);timerInt=null;releaseWake();document.getElementById('timer-start-btn').textContent='Start';timerUpdate();}
 
+/* ---------- daily log ---------- */
+function dlKey(d){return pad2(d.getDate())+'/'+pad2(d.getMonth()+1)+'/'+d.getFullYear();}
+function dlNorm(s){ // normalise a sheet date to dd/mm/yyyy
+  s=String(s||'').trim();
+  if(/^\d{4}-\d{2}-\d{2}T/.test(s)){const d=new Date(s);if(!isNaN(d))return dlKey(d);}
+  const p=s.split('/'); if(p.length===3) return pad2(+p[0])+'/'+pad2(+p[1])+'/'+p[2];
+  return s;
+}
+async function loadDailyLog(){
+  if(!dlDate) dlDate=dlKey(new Date());
+  const di=document.getElementById('dl-date'); if(di&&!di.value) di.value=todayISO();
+  try{
+    const res=await fetch(SCRIPT_URL+'?action=getDailyLog');
+    const json=await res.json();
+    dlCats=json.categories||[];
+    dlRows={};
+    (json.rows||[]).forEach(r=>{ dlRows[dlNorm(r.date)]=(r.vals||[]).map(v=>v?1:0); });
+    renderDailyLog();
+  }catch(e){
+    document.getElementById('dl-pills').innerHTML='<div class="no-data-msg">Couldn’t load — tap Today to retry.</div>';
+  }
+}
+function renderDailyLog(){ renderDLPills(); document.getElementById('dl-cal').innerHTML=buildCalendar(); }
+function renderDLPills(){
+  const host=document.getElementById('dl-pills');
+  if(!dlCats.length){host.innerHTML='<div class="no-data-msg">No habit columns found in the Daily Log sheet.</div>';return;}
+  const vals=dlRows[dlDate]||dlCats.map(()=>0);
+  host.innerHTML=dlCats.map((c,i)=>`<button class="dl-pill ${vals[i]?'on':''}" onclick="toggleDL(${i})"><span class="tick">${vals[i]?'✓':''}</span>${esc(c)}</button>`).join('');
+}
+async function toggleDL(i){
+  const vals=(dlRows[dlDate]||dlCats.map(()=>0)).slice();
+  vals[i]=vals[i]?0:1;
+  dlRows[dlDate]=vals;
+  renderDailyLog();  // instant feedback
+  try{ await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'saveDailyLog',date:dlDate,vals})}); }catch(e){}
+}
+function onDLDate(){ const v=document.getElementById('dl-date').value; if(v) dlDate=inputToDDYYYY(v); renderDLPills(); }
+function dlToday(){ const d=new Date(); dlDate=dlKey(d); document.getElementById('dl-date').value=todayISO(); renderDailyLog(); }
+function inputToDDYYYY(v){const p=String(v).split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:v;}  // yyyy-mm-dd -> dd/mm/yyyy
+function dlStatus(d){
+  const v=dlRows[dlKey(d)];
+  if(!v||!v.length) return 'none';
+  const done=v.filter(x=>x).length;
+  if(done===0) return 'none';
+  return done===v.length ? 'full' : 'partial';
+}
+function buildCalendar(){
+  const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const today=new Date(); today.setHours(0,0,0,0);
+  const todayK=dlKey(today);
+  const dow=(today.getDay()+6)%7;                       // 0=Mon..6=Sun
+  const thisMon=new Date(today); thisMon.setDate(today.getDate()-dow);
+  const startMon=new Date(thisMon); startMon.setDate(thisMon.getDate()-35);   // 6 weeks incl. current
+  const winEnd=new Date(thisMon); winEnd.setDate(thisMon.getDate()+6);        // this Sunday
+  // months present in window, newest first
+  const months=[]; const seen={};
+  for(let t=new Date(winEnd); t>=startMon; t.setDate(t.getDate()-1)){
+    const k=t.getFullYear()+'-'+t.getMonth();
+    if(!seen[k]){seen[k]=1; months.push({y:t.getFullYear(),m:t.getMonth()});}
+  }
+  let html='';
+  months.forEach(({y,m})=>{
+    // weeks (mondays), newest first, that contain a day of this month in the window
+    const weeks=[];
+    for(let wk=new Date(thisMon); wk>=startMon; wk.setDate(wk.getDate()-7)){
+      let has=false;
+      for(let d=0;d<7;d++){const dt=new Date(wk);dt.setDate(wk.getDate()+d);if(dt>=startMon&&dt<=winEnd&&dt.getMonth()===m&&dt.getFullYear()===y){has=true;break;}}
+      if(has) weeks.push(new Date(wk));
+    }
+    html+=`<div class="dl-month"><div class="dl-month-label">${MONTHS[m]} ${y}</div><div class="dl-grid">`;
+    ['M','T','W','T','F','S','S'].forEach(w=>html+=`<div class="dl-wd">${w}</div>`);
+    weeks.forEach(wk=>{
+      for(let d=0;d<7;d++){
+        const dt=new Date(wk); dt.setDate(wk.getDate()+d);
+        const inMonth=dt.getMonth()===m&&dt.getFullYear()===y&&dt>=startMon&&dt<=winEnd;
+        if(!inMonth){html+='<div class="dl-cell empty"></div>';continue;}
+        const future=dt>today;
+        const st=future?'none':dlStatus(dt);
+        html+=`<div class="dl-cell ${st}${future?' future':''}${dlKey(dt)===todayK?' today':''}">${dt.getDate()}</div>`;
+      }
+    });
+    html+='</div></div>';
+  });
+  return html;
+}
+
 /* ---------- init ---------- */
 document.addEventListener('DOMContentLoaded',()=>{
   buildTabs();buildPanels();
   document.querySelector('.preset[data-sec="30"]').classList.add('active');
   let start=WORKOUTS[0];
-  try{const t=localStorage.getItem('wt-tab');if(t&&(WORKOUTS.includes(t)||t==='Overview'||t==='Stretch'))start=t;}catch(e){}
+  try{const t=localStorage.getItem('wt-tab');if(t&&(WORKOUTS.includes(t)||t==='Overview'||t==='Stretch'||t==='Daily Log'))start=t;}catch(e){}
   switchTab(start);
 });
 </script>
